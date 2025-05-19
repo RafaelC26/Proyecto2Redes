@@ -18,11 +18,10 @@ public class ToolbarBuilder {
         toolBar.add(btnZoom);
         toolBar.add(btnHerramientas);
 
-        JPanel panel = new JPanel(null);
-        panel.setBounds(0, 0, 900, 30);
+        JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(new Color(250, 250, 250));
-        toolBar.setBounds(0, 0, 900, 30);
-        panel.add(toolBar);
+        panel.add(toolBar, BorderLayout.CENTER);
+        panel.setPreferredSize(new Dimension(0, 38)); 
 
         return panel;
     }
