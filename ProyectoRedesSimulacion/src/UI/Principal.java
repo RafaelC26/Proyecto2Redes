@@ -1,9 +1,13 @@
 import java.awt.*;
 import javax.swing.*;
+import java.awt.event.*;
+import javax.swing.ImageIcon;
 
 public class Principal extends JFrame {
 
-    private JPanel panelCentral; // <-- Agrega esto
+    private JPanel panelCentral;
+    private Point lastPoint;
+    private double zoomFactor = 1.0;
 
     public void start() {
         setTitle("Simulador de Redes de Computadores");
@@ -17,8 +21,75 @@ public class Principal extends JFrame {
         setContentPane(mainPanel);
 
         JPanel toolbarPanel = new ToolbarBuilder().build();
-        panelCentral = new CenterPanelBuilder().build(); // <-- Usa el atributo
-        JPanel panelBulidThings = new PanelBulidThings(this).build(); // <-- Pasa la instancia de Principal
+        panelCentral = new CenterPanelBuilder().build();
+
+        panelCentral.addMouseWheelListener(new MouseWheelListener() {
+            public void mouseWheelMoved(MouseWheelEvent e) {
+                double oldZoom = zoomFactor;
+                if (e.getPreciseWheelRotation() < 0) {
+                    zoomFactor *= 1.1; 
+                } else {
+                    zoomFactor /= 1.1; 
+                }
+                zoomFactor = Math.max(0.2, Math.min(zoomFactor, 5.0));
+                for (Component comp : panelCentral.getComponents()) {
+                    if (comp instanceof JPanel) {
+                        JPanel panel = (JPanel) comp;
+                        String imagePath = (String) panel.getClientProperty("imagePath");
+                        Integer baseW = (Integer) panel.getClientProperty("baseW");
+                        Integer baseH = (Integer) panel.getClientProperty("baseH");
+                        Integer baseX = (Integer) panel.getClientProperty("baseX");
+                        Integer baseY = (Integer) panel.getClientProperty("baseY");
+                        if (imagePath != null && baseW != null && baseH != null && baseX != null && baseY != null) {
+                            int newW = (int) (baseW * zoomFactor);
+                            int newH = (int) (baseH * zoomFactor);
+                            int newX = (int) (baseX * zoomFactor);
+                            int newY = (int) (baseY * zoomFactor);
+                            panel.setBounds(newX, newY, newW, newH + 20);
+
+                            for (Component c : panel.getComponents()) {
+                                if (c instanceof JLabel label) {
+                                    if (label.getIcon() != null) {
+                                        // Es la imagen
+                                        ImageIcon originalIcon = new ImageIcon(imagePath);
+                                        Image scaledImage = originalIcon.getImage().getScaledInstance(newW, newH, Image.SCALE_SMOOTH);
+                                        label.setIcon(new ImageIcon(scaledImage));
+                                    } else {
+                                        // Es el texto
+                                        float baseFontSize = 10f; 
+                                        label.setFont(label.getFont().deriveFont(baseFontSize * (float)zoomFactor));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                panelCentral.revalidate();
+                panelCentral.repaint();
+            }
+        });
+
+        panelCentral.addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                lastPoint = e.getPoint();
+            }
+        });
+        panelCentral.addMouseMotionListener(new MouseMotionAdapter() {
+            public void mouseDragged(MouseEvent e) {
+                if (lastPoint == null) return;
+                Point current = e.getPoint();
+                int dx = current.x - lastPoint.x;
+                int dy = current.y - lastPoint.y;
+                for (Component comp : panelCentral.getComponents()) {
+                    Point loc = comp.getLocation();
+                    comp.setLocation(loc.x + dx, loc.y + dy);
+                }
+                panelCentral.repaint();
+                lastPoint = current;
+            }
+        });
+
+        JPanel panelBulidThings = new PanelBulidThings(this).build();
 
         mainPanel.add(toolbarPanel, BorderLayout.NORTH);
         mainPanel.add(panelCentral, BorderLayout.CENTER);
@@ -29,5 +100,47 @@ public class Principal extends JFrame {
 
     public JPanel getPanelCentral() {
         return panelCentral;
+    }
+
+    public void zoomPequeno() {
+        double oldZoom = zoomFactor;
+        zoomFactor *= 1.2; // O el factor que prefieras
+        for (Component comp : panelCentral.getComponents()) {
+            if (comp instanceof JPanel) {
+                JPanel panel = (JPanel) comp;
+                String imagePath = (String) panel.getClientProperty("imagePath");
+                Integer baseW = (Integer) panel.getClientProperty("baseW");
+                Integer baseH = (Integer) panel.getClientProperty("baseH");
+                Integer baseX = (Integer) panel.getClientProperty("baseX");
+                Integer baseY = (Integer) panel.getClientProperty("baseY");
+                if (imagePath != null && baseW != null && baseH != null && baseX != null && baseY != null) {
+                    int newW = (int) (baseW * zoomFactor);
+                    int newH = (int) (baseH * zoomFactor);
+                    int newX = (int) (baseX * zoomFactor);
+                    int newY = (int) (baseY * zoomFactor);
+                    panel.setBounds(newX, newY, newW, newH + 20);
+
+                    // Cambia el tamaño de la imagen y el texto
+                    for (Component c : panel.getComponents()) {
+                        if (c instanceof JLabel label) {
+                            if (label.getIcon() != null) {
+                                ImageIcon originalIcon = new ImageIcon(imagePath);
+                                Image scaledImage = originalIcon.getImage().getScaledInstance(newW, newH, Image.SCALE_SMOOTH);
+                                label.setIcon(new ImageIcon(scaledImage));
+                            } else {
+                            float baseFontSize = 10f;
+                            label.setFont(label.getFont().deriveFont(baseFontSize * (float)zoomFactor));
+                        }
+                    
+                }
+            }
+        }
+    }
+    panelCentral.revalidate();
+    panelCentral.repaint();
+}
+}
+    public double getZoomFactor() {
+        return zoomFactor;
     }
 }

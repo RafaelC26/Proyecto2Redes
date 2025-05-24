@@ -7,7 +7,7 @@ public class MenuThings {
     public static JButton createServerButton() {
         
 
-        String imagePath = "src\\Images\\server.png";
+        String imagePath = "src\\Images\\router.png";
         ImageIcon originalIcon = new ImageIcon(imagePath);
 
         Image scaledImage = originalIcon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
