@@ -6,6 +6,7 @@ import javax.swing.ImageIcon;
 public class Principal extends JFrame {
 
     private JPanel panelCentral;
+    private JScrollPane scrollPaneCentral;
     private Point lastPoint;
     private double zoomFactor = 1.0;
 
@@ -21,7 +22,19 @@ public class Principal extends JFrame {
         setContentPane(mainPanel);
 
         JPanel toolbarPanel = new ToolbarBuilder(this).build();
-        panelCentral = new CenterPanelBuilder().build();
+
+        // Panel central y scrollpane
+        panelCentral = new JPanel(null);
+        panelCentral.setPreferredSize(new Dimension(2000, 1200));
+        scrollPaneCentral = new JScrollPane(panelCentral);
+        scrollPaneCentral.setPreferredSize(new Dimension(900, 600)); 
+
+        SwingUtilities.invokeLater(() -> {
+            int centerX = panelCentral.getPreferredSize().width / 2 - scrollPaneCentral.getViewport().getWidth() / 2;
+            int centerY = panelCentral.getPreferredSize().height / 2 - scrollPaneCentral.getViewport().getHeight() / 2;
+            scrollPaneCentral.getHorizontalScrollBar().setValue(Math.max(centerX, 0));
+            scrollPaneCentral.getVerticalScrollBar().setValue(Math.max(centerY, 0));
+        });
 
         panelCentral.addMouseWheelListener(new MouseWheelListener() {
             public void mouseWheelMoved(MouseWheelEvent e) {
@@ -88,11 +101,11 @@ public class Principal extends JFrame {
             }
         });
 
-        JPanel panelBulidThings = new PanelBulidThings(this).build();
+        PanelBulidThings panelBulidThings = new PanelBulidThings(this, panelCentral);
 
         mainPanel.add(toolbarPanel, BorderLayout.NORTH);
-        mainPanel.add(panelCentral, BorderLayout.CENTER);
-        mainPanel.add(panelBulidThings, BorderLayout.SOUTH);
+        mainPanel.add(scrollPaneCentral, BorderLayout.CENTER); 
+        mainPanel.add(panelBulidThings.build(), BorderLayout.SOUTH);
 
         setVisible(true);
     }

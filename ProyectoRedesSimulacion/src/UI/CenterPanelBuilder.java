@@ -5,7 +5,7 @@ public class CenterPanelBuilder {
     public JPanel build() {
         JPanel panel = new JPanel(null); 
         panel.setBackground(Color.WHITE); 
-        panel.setPreferredSize(new Dimension(800, 500)); // Opcional: tamaño por defecto
+        panel.setPreferredSize(new Dimension(800, 500)); 
         return panel;
     }
 }

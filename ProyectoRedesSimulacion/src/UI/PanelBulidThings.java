@@ -6,6 +6,7 @@ import javax.swing.*;
 
 public class PanelBulidThings {
     private Principal principal;
+    private JPanel centralPanel;
     private int routerCount = 1;
     private int serverCount = 1;
     private int computerCount = 1;
@@ -13,14 +14,14 @@ public class PanelBulidThings {
     private Dimension computerCurrentSize = null;
     private Dimension serverCurrentSize = null;
 
-    // Variables para manejar la conexión
     private JPanel firstSelectedPanel = null;
     private List<JPanel[]> conexiones = new ArrayList<>();
 
     private double zoomFactor = 1.0;
 
-    public PanelBulidThings(Principal principal) {
+    public PanelBulidThings(Principal principal, JPanel centralPanel) {
         this.principal = principal;
+        this.centralPanel = centralPanel;
     }
 
     public JPanel build() {
@@ -41,31 +42,13 @@ public class PanelBulidThings {
         JButton clientButton = MenuThings.createClientButton();
         JButton serverButton = MenuThings.createServerButton();
 
-        // Panel central
-        JPanel centralPanel = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g;
-                g2.setStroke(new BasicStroke(2));
-                g2.setColor(Color.BLUE);
-                for (JPanel[] par : conexiones) {
-                    Point p1 = getPanelCenter(par[0]);
-                    Point p2 = getPanelCenter(par[1]);
-                    g2.drawLine(p1.x, p1.y, p2.x, p2.y);
-                }
-            }
-        };
-        centralPanel.setLayout(null);
-        principal.setPanelCentral(centralPanel);
-
         // ---- SERVER ----
         serverButton.addActionListener(e -> {
             int cantidad = 1;
             boolean valido = false;
             while (!valido) {
                 String input = JOptionPane.showInputDialog(null, "¿Cuántos servidores desea agregar?", "Agregar Servidores", JOptionPane.QUESTION_MESSAGE);
-                if (input == null) return; // Cancelado
+                if (input == null) return; 
                 try {
                     cantidad = Integer.parseInt(input);
                     if (cantidad < 1) throw new NumberFormatException();
@@ -115,7 +98,6 @@ public class PanelBulidThings {
                         offset = evt.getPoint();
                         centralPanel.revalidate();
                         centralPanel.repaint();
-                        // Mostrar menú de opciones con click derecho
                         if (SwingUtilities.isRightMouseButton(evt)) {
                             JPopupMenu menu = new JPopupMenu();
                             JMenuItem eliminar = new JMenuItem("Eliminar");
@@ -146,7 +128,6 @@ public class PanelBulidThings {
                             menu.add(Econexion);
                             menu.show(serverPanel, evt.getX(), evt.getY());
                         } else if (firstSelectedPanel != null && firstSelectedPanel != serverPanel) {
-                            // Segundo click: crear conexión
                             conexiones.add(new JPanel[]{firstSelectedPanel, serverPanel});
                             firstSelectedPanel = null;
                             centralPanel.repaint();
@@ -176,6 +157,7 @@ public class PanelBulidThings {
                 centralPanel.revalidate();
                 centralPanel.repaint();
 
+
                 if (serverCurrentSize == null) {
                     serverCurrentSize = new Dimension(baseW, baseH);
                 }
@@ -189,7 +171,7 @@ public class PanelBulidThings {
             boolean valido = false;
             while (!valido) {
                 String input = JOptionPane.showInputDialog(null, "¿Cuántos routers desea agregar?", "Agregar Routers", JOptionPane.QUESTION_MESSAGE);
-                if (input == null) return; // Cancelado
+                if (input == null) return; 
                 try {
                     cantidad = Integer.parseInt(input);
                     if (cantidad < 1) throw new NumberFormatException();
@@ -310,7 +292,7 @@ public class PanelBulidThings {
             boolean valido = false;
             while (!valido) {
                 String input = JOptionPane.showInputDialog(null, "¿Cuántos clientes desea agregar?", "Agregar Clientes", JOptionPane.QUESTION_MESSAGE);
-                if (input == null) return; // Cancelado
+                if (input == null) return;
                 try {
                     cantidad = Integer.parseInt(input);
                     if (cantidad < 1) throw new NumberFormatException();
@@ -430,30 +412,17 @@ public class PanelBulidThings {
         panel.add(serverButton);
 
         panelTotal.add(label, BorderLayout.NORTH);
-        panelTotal.add(panel, BorderLayout.CENTER);
-
-        centralPanel.addMouseWheelListener(e -> {
-            if (e.getPreciseWheelRotation() < 0) {
-                zoomFactor *= 1.1;
-            } else {
-                zoomFactor /= 1.1;
-            }
-            actualizarZoomComponentes(centralPanel, zoomFactor);
-            centralPanel.revalidate();
-            centralPanel.repaint();
-        });
+        panelTotal.add(panel, BorderLayout.SOUTH);
 
         return panelTotal;
     }
 
-    // Método auxiliar para obtener el centro de un panel
     private Point getPanelCenter(JPanel panel) {
         int x = panel.getX() + panel.getWidth() / 2;
         int y = panel.getY() + panel.getHeight() / 2;
         return new Point(x, y);
     }
 
-    // Actualiza tamaño, posición, imagen y fuente según el zoom
     private void actualizarZoomComponentes(JPanel centralPanel, double zoomFactor) {
         for (Component comp : centralPanel.getComponents()) {
             if (comp instanceof JPanel) {
@@ -473,12 +442,10 @@ public class PanelBulidThings {
                     for (Component c : panel.getComponents()) {
                         if (c instanceof JLabel label) {
                             if (label.getIcon() != null) {
-                                // Redimensionar imagen
                                 ImageIcon originalIcon = new ImageIcon(imagePath);
                                 Image scaledImage = originalIcon.getImage().getScaledInstance(visualW, visualH, Image.SCALE_SMOOTH);
                                 label.setIcon(new ImageIcon(scaledImage));
                             } else {
-                                // Redimensionar fuente
                                 float baseFontSize = 10f;
                                 label.setFont(label.getFont().deriveFont(baseFontSize * (float)zoomFactor));
                             }
