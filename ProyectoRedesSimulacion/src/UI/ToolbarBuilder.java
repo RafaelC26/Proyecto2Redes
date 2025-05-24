@@ -2,6 +2,11 @@ import javax.swing.*;
 import java.awt.*;
 
 public class ToolbarBuilder {
+    private JFrame frame;
+
+    public ToolbarBuilder(JFrame frame) {
+        this.frame = frame;
+    }
 
     public JPanel build() {
         JToolBar toolBar = new JToolBar();
@@ -11,12 +16,10 @@ public class ToolbarBuilder {
         toolBar.setLayout(new FlowLayout(FlowLayout.LEFT, 20, 8));
 
         JButton btnFile = MenuFactory.createFileButton();
-        JButton btnZoom = MenuFactory.createZoomButton();
-        JButton btnHerramientas = MenuFactory.createHerramientasButton();
+        JButton herramientasBtn = MenuFactory.createHerramientasButton(frame);
 
         toolBar.add(btnFile);
-        toolBar.add(btnZoom);
-        toolBar.add(btnHerramientas);
+        toolBar.add(herramientasBtn);
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(new Color(250, 250, 250));

@@ -20,7 +20,7 @@ public class Principal extends JFrame {
         mainPanel.setBackground(new Color(245, 249, 255));
         setContentPane(mainPanel);
 
-        JPanel toolbarPanel = new ToolbarBuilder().build();
+        JPanel toolbarPanel = new ToolbarBuilder(this).build();
         panelCentral = new CenterPanelBuilder().build();
 
         panelCentral.addMouseWheelListener(new MouseWheelListener() {
@@ -102,44 +102,6 @@ public class Principal extends JFrame {
         return panelCentral;
     }
 
-    public void zoomPequeno() {
-        double oldZoom = zoomFactor;
-        zoomFactor *= 1.2; // O el factor que prefieras
-        for (Component comp : panelCentral.getComponents()) {
-            if (comp instanceof JPanel) {
-                JPanel panel = (JPanel) comp;
-                String imagePath = (String) panel.getClientProperty("imagePath");
-                Integer baseW = (Integer) panel.getClientProperty("baseW");
-                Integer baseH = (Integer) panel.getClientProperty("baseH");
-                Integer baseX = (Integer) panel.getClientProperty("baseX");
-                Integer baseY = (Integer) panel.getClientProperty("baseY");
-                if (imagePath != null && baseW != null && baseH != null && baseX != null && baseY != null) {
-                    int newW = (int) (baseW * zoomFactor);
-                    int newH = (int) (baseH * zoomFactor);
-                    int newX = (int) (baseX * zoomFactor);
-                    int newY = (int) (baseY * zoomFactor);
-                    panel.setBounds(newX, newY, newW, newH + 20);
-
-                    // Cambia el tamaño de la imagen y el texto
-                    for (Component c : panel.getComponents()) {
-                        if (c instanceof JLabel label) {
-                            if (label.getIcon() != null) {
-                                ImageIcon originalIcon = new ImageIcon(imagePath);
-                                Image scaledImage = originalIcon.getImage().getScaledInstance(newW, newH, Image.SCALE_SMOOTH);
-                                label.setIcon(new ImageIcon(scaledImage));
-                            } else {
-                            float baseFontSize = 10f;
-                            label.setFont(label.getFont().deriveFont(baseFontSize * (float)zoomFactor));
-                        }
-                    
-                }
-            }
-        }
-    }
-    panelCentral.revalidate();
-    panelCentral.repaint();
-}
-}
     public double getZoomFactor() {
         return zoomFactor;
     }
