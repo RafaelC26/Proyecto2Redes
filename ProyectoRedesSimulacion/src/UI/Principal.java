@@ -102,6 +102,10 @@ public class Principal extends JFrame {
         return panelCentral;
     }
 
+    public void setPanelCentral(JPanel panel) {
+        this.panelCentral = panel;
+    }
+
     public double getZoomFactor() {
         return zoomFactor;
     }
