@@ -1,7 +1,8 @@
 import java.awt.*;
 import javax.swing.*;
 import java.awt.event.*;
-import javax.swing.ImageIcon;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Principal extends JFrame {
 
@@ -9,6 +10,7 @@ public class Principal extends JFrame {
     private JScrollPane scrollPaneCentral;
     private Point lastPoint;
     private double zoomFactor = 1.0;
+    private List<JPanel[]> conexiones = new ArrayList<>();
 
     public void start() {
         setTitle("Simulador de Redes de Computadores");
@@ -23,20 +25,39 @@ public class Principal extends JFrame {
 
         JPanel toolbarPanel = new ToolbarBuilder(this).build();
 
-        // Panel central y scrollpane
-        panelCentral = new JPanel(null);
-        panelCentral.setPreferredSize(new Dimension(2000, 1200));
-        scrollPaneCentral = new JScrollPane(panelCentral);
+        JPanel centralPanel = new JPanel(null) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                Graphics2D g2 = (Graphics2D) g;
+                g2.setStroke(new BasicStroke(2));
+                g2.setColor(Color.BLUE);
+                for (JPanel[] par : conexiones) {
+                    Point p1 = getPanelCenter(par[0]);
+                    Point p2 = getPanelCenter(par[1]);
+                    g2.drawLine(p1.x, p1.y, p2.x, p2.y);
+                }
+            }
+
+            private Point getPanelCenter(JPanel panel) {
+                Point panelPos = SwingUtilities.convertPoint(panel.getParent(), panel.getLocation(), this);
+                int x = panelPos.x + panel.getWidth() / 2;
+                int y = panelPos.y + panel.getHeight() / 2;
+                return new Point(x, y);
+            }
+        };
+        centralPanel.setPreferredSize(new Dimension(2000, 1200));
+        scrollPaneCentral = new JScrollPane(centralPanel);
         scrollPaneCentral.setPreferredSize(new Dimension(900, 600)); 
 
         SwingUtilities.invokeLater(() -> {
-            int centerX = panelCentral.getPreferredSize().width / 2 - scrollPaneCentral.getViewport().getWidth() / 2;
-            int centerY = panelCentral.getPreferredSize().height / 2 - scrollPaneCentral.getViewport().getHeight() / 2;
-            scrollPaneCentral.getHorizontalScrollBar().setValue(Math.max(centerX, 0));
-            scrollPaneCentral.getVerticalScrollBar().setValue(Math.max(centerY, 0));
+            int centerX = centralPanel.getPreferredSize().width / 2 - scrollPaneCentral.getViewport().getWidth() / 2;
+            int centerY = centralPanel.getPreferredSize().height / 2 - scrollPaneCentral.getViewport().getHeight() / 2;
+            scrollPaneCentral.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            scrollPaneCentral.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         });
 
-        panelCentral.addMouseWheelListener(new MouseWheelListener() {
+        centralPanel.addMouseWheelListener(new MouseWheelListener() {
             public void mouseWheelMoved(MouseWheelEvent e) {
                 if (e.getPreciseWheelRotation() < 0) {
                     zoomFactor *= 1.1; 
@@ -44,7 +65,7 @@ public class Principal extends JFrame {
                     zoomFactor /= 1.1; 
                 }
                 zoomFactor = Math.max(0.2, Math.min(zoomFactor, 5.0));
-                for (Component comp : panelCentral.getComponents()) {
+                for (Component comp : centralPanel.getComponents()) {
                     if (comp instanceof JPanel) {
                         JPanel panel = (JPanel) comp;
                         String imagePath = (String) panel.getClientProperty("imagePath");
@@ -76,32 +97,33 @@ public class Principal extends JFrame {
                         }
                     }
                 }
-                panelCentral.revalidate();
-                panelCentral.repaint();
+                centralPanel.revalidate();
+                centralPanel.repaint();
             }
         });
 
-        panelCentral.addMouseListener(new MouseAdapter() {
+        centralPanel.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
                 lastPoint = e.getPoint();
             }
         });
-        panelCentral.addMouseMotionListener(new MouseMotionAdapter() {
+        centralPanel.addMouseMotionListener(new MouseMotionAdapter() {
             public void mouseDragged(MouseEvent e) {
                 if (lastPoint == null) return;
                 Point current = e.getPoint();
                 int dx = current.x - lastPoint.x;
                 int dy = current.y - lastPoint.y;
-                for (Component comp : panelCentral.getComponents()) {
+                for (Component comp : centralPanel.getComponents()) {
                     Point loc = comp.getLocation();
                     comp.setLocation(loc.x + dx, loc.y + dy);
                 }
-                panelCentral.repaint();
+                centralPanel.repaint();
                 lastPoint = current;
             }
         });
 
-        PanelBulidThings panelBulidThings = new PanelBulidThings(this, panelCentral);
+        // Pasa conexiones a PanelBulidThings
+        PanelBulidThings panelBulidThings = new PanelBulidThings(this, centralPanel, conexiones);
 
         mainPanel.add(toolbarPanel, BorderLayout.NORTH);
         mainPanel.add(scrollPaneCentral, BorderLayout.CENTER); 

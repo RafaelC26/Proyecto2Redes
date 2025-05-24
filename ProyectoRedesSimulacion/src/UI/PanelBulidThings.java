@@ -1,12 +1,12 @@
 import java.awt.*;
 import java.awt.event.*;
-import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 
 public class PanelBulidThings {
     private Principal principal;
     private JPanel centralPanel;
+    private List<JPanel[]> conexiones;
     private int routerCount = 1;
     private int serverCount = 1;
     private int computerCount = 1;
@@ -15,13 +15,12 @@ public class PanelBulidThings {
     private Dimension serverCurrentSize = null;
 
     private JPanel firstSelectedPanel = null;
-    private List<JPanel[]> conexiones = new ArrayList<>();
-
     private double zoomFactor = 1.0;
 
-    public PanelBulidThings(Principal principal, JPanel centralPanel) {
+    public PanelBulidThings(Principal principal, JPanel centralPanel, List<JPanel[]> conexiones) {
         this.principal = principal;
         this.centralPanel = centralPanel;
+        this.conexiones = conexiones;
     }
 
     public JPanel build() {
@@ -134,7 +133,6 @@ public class PanelBulidThings {
                         }
                     }
                     public void mouseReleased(MouseEvent evt) {
-                        // Actualiza la posición base al soltar
                         int logicX = (int)(serverPanel.getX() / zoomFactor);
                         int logicY = (int)(serverPanel.getY() / zoomFactor);
                         serverPanel.putClientProperty("baseX", logicX);
@@ -416,43 +414,5 @@ public class PanelBulidThings {
 
         return panelTotal;
     }
-
-    private Point getPanelCenter(JPanel panel) {
-        int x = panel.getX() + panel.getWidth() / 2;
-        int y = panel.getY() + panel.getHeight() / 2;
-        return new Point(x, y);
-    }
-
-    private void actualizarZoomComponentes(JPanel centralPanel, double zoomFactor) {
-        for (Component comp : centralPanel.getComponents()) {
-            if (comp instanceof JPanel) {
-                JPanel panel = (JPanel) comp;
-                Integer baseW = (Integer) panel.getClientProperty("baseW");
-                Integer baseH = (Integer) panel.getClientProperty("baseH");
-                Integer baseX = (Integer) panel.getClientProperty("baseX");
-                Integer baseY = (Integer) panel.getClientProperty("baseY");
-                String imagePath = (String) panel.getClientProperty("imagePath");
-                if (baseW != null && baseH != null && baseX != null && baseY != null && imagePath != null) {
-                    int visualW = (int) (baseW * zoomFactor);
-                    int visualH = (int) (baseH * zoomFactor);
-                    int visualX = (int) (baseX * zoomFactor);
-                    int visualY = (int) (baseY * zoomFactor);
-                    panel.setBounds(visualX, visualY, visualW, visualH + 20);
-
-                    for (Component c : panel.getComponents()) {
-                        if (c instanceof JLabel label) {
-                            if (label.getIcon() != null) {
-                                ImageIcon originalIcon = new ImageIcon(imagePath);
-                                Image scaledImage = originalIcon.getImage().getScaledInstance(visualW, visualH, Image.SCALE_SMOOTH);
-                                label.setIcon(new ImageIcon(scaledImage));
-                            } else {
-                                float baseFontSize = 10f;
-                                label.setFont(label.getFont().deriveFont(baseFontSize * (float)zoomFactor));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
+
