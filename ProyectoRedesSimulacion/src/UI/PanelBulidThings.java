@@ -1,6 +1,7 @@
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
+import java.util.ArrayList;
 import javax.swing.*;
 
 public class PanelBulidThings {
@@ -102,16 +103,47 @@ public class PanelBulidThings {
                             JMenuItem eliminar = new JMenuItem("Eliminar");
                             JMenuItem conexion = new JMenuItem("Crear Conexión");
                             JMenuItem Econexion = new JMenuItem("Eliminar Conexión");
+                            // --- NUEVO: Eliminar conexión mostrando lista ---
                             Econexion.addActionListener(ae -> {
-                                if (firstSelectedPanel != null && firstSelectedPanel != serverPanel) {
-                                    for (JPanel[] par : conexiones) {
-                                        if ((par[0] == firstSelectedPanel && par[1] == serverPanel) || (par[0] == serverPanel && par[1] == firstSelectedPanel)) {
-                                            conexiones.remove(par);
+                                List<JPanel[]> conexionesDelPanel = new ArrayList<>();
+                                for (JPanel[] par : conexiones) {
+                                    if (par[0] == serverPanel || par[1] == serverPanel) {
+                                        conexionesDelPanel.add(par);
+                                    }
+                                }
+                                if (conexionesDelPanel.isEmpty()) {
+                                    JOptionPane.showMessageDialog(null, "No hay conexiones para eliminar.", "Sin conexiones", JOptionPane.INFORMATION_MESSAGE);
+                                    return;
+                                }
+                                String[] opciones = new String[conexionesDelPanel.size()];
+                                for (int i = 0; i < conexionesDelPanel.size(); i++) {
+                                    JPanel otro = (conexionesDelPanel.get(i)[0] == serverPanel) ? conexionesDelPanel.get(i)[1] : conexionesDelPanel.get(i)[0];
+                                    String nombre = "";
+                                    for (Component c : otro.getComponents()) {
+                                        if (c instanceof JLabel label && label.getText() != null && !label.getText().isEmpty()) {
+                                            nombre = label.getText();
                                             break;
                                         }
                                     }
-                                    firstSelectedPanel = null;
-                                    centralPanel.repaint();
+                                    opciones[i] = "Conectado a: " + nombre;
+                                }
+                                String seleccion = (String) JOptionPane.showInputDialog(
+                                    null,
+                                    "Seleccione la conexión a eliminar:",
+                                    "Eliminar Conexión",
+                                    JOptionPane.QUESTION_MESSAGE,
+                                    null,
+                                    opciones,
+                                    opciones[0]
+                                );
+                                if (seleccion != null) {
+                                    for (int i = 0; i < opciones.length; i++) {
+                                        if (opciones[i].equals(seleccion)) {
+                                            conexiones.remove(conexionesDelPanel.get(i));
+                                            centralPanel.repaint();
+                                            break;
+                                        }
+                                    }
                                 }
                             });
                             eliminar.addActionListener(ae -> {
@@ -154,7 +186,6 @@ public class PanelBulidThings {
                 centralPanel.add(serverPanel);
                 centralPanel.revalidate();
                 centralPanel.repaint();
-
 
                 if (serverCurrentSize == null) {
                     serverCurrentSize = new Dimension(baseW, baseH);
@@ -224,16 +255,47 @@ public class PanelBulidThings {
                             JMenuItem eliminar = new JMenuItem("Eliminar");
                             JMenuItem conexion = new JMenuItem("Crear Conexión");
                             JMenuItem Econexion = new JMenuItem("Eliminar Conexión");
+                            // --- NUEVO: Eliminar conexión mostrando lista ---
                             Econexion.addActionListener(ae -> {
-                                if (firstSelectedPanel != null && firstSelectedPanel != routerPanel) {
-                                    for (JPanel[] par : conexiones) {
-                                        if ((par[0] == firstSelectedPanel && par[1] == routerPanel) || (par[0] == routerPanel && par[1] == firstSelectedPanel)) {
-                                            conexiones.remove(par);
+                                List<JPanel[]> conexionesDelPanel = new ArrayList<>();
+                                for (JPanel[] par : conexiones) {
+                                    if (par[0] == routerPanel || par[1] == routerPanel) {
+                                        conexionesDelPanel.add(par);
+                                    }
+                                }
+                                if (conexionesDelPanel.isEmpty()) {
+                                    JOptionPane.showMessageDialog(null, "No hay conexiones para eliminar.", "Sin conexiones", JOptionPane.INFORMATION_MESSAGE);
+                                    return;
+                                }
+                                String[] opciones = new String[conexionesDelPanel.size()];
+                                for (int i = 0; i < conexionesDelPanel.size(); i++) {
+                                    JPanel otro = (conexionesDelPanel.get(i)[0] == routerPanel) ? conexionesDelPanel.get(i)[1] : conexionesDelPanel.get(i)[0];
+                                    String nombre = "";
+                                    for (Component c : otro.getComponents()) {
+                                        if (c instanceof JLabel label && label.getText() != null && !label.getText().isEmpty()) {
+                                            nombre = label.getText();
                                             break;
                                         }
                                     }
-                                    firstSelectedPanel = null;
-                                    centralPanel.repaint();
+                                    opciones[i] = "Conectado a: " + nombre;
+                                }
+                                String seleccion = (String) JOptionPane.showInputDialog(
+                                    null,
+                                    "Seleccione la conexión a eliminar:",
+                                    "Eliminar Conexión",
+                                    JOptionPane.QUESTION_MESSAGE,
+                                    null,
+                                    opciones,
+                                    opciones[0]
+                                );
+                                if (seleccion != null) {
+                                    for (int i = 0; i < opciones.length; i++) {
+                                        if (opciones[i].equals(seleccion)) {
+                                            conexiones.remove(conexionesDelPanel.get(i));
+                                            centralPanel.repaint();
+                                            break;
+                                        }
+                                    }
                                 }
                             });
                             eliminar.addActionListener(ae -> {
@@ -345,16 +407,47 @@ public class PanelBulidThings {
                             JMenuItem eliminar = new JMenuItem("Eliminar");
                             JMenuItem conexion = new JMenuItem("Crear Conexión");
                             JMenuItem Econexion = new JMenuItem("Eliminar Conexión");
+                            // --- NUEVO: Eliminar conexión mostrando lista ---
                             Econexion.addActionListener(ae -> {
-                                if (firstSelectedPanel != null && firstSelectedPanel != clientPanel) {
-                                    for (JPanel[] par : conexiones) {
-                                        if ((par[0] == firstSelectedPanel && par[1] == clientPanel) || (par[0] == clientPanel && par[1] == firstSelectedPanel)) {
-                                            conexiones.remove(par);
+                                List<JPanel[]> conexionesDelPanel = new ArrayList<>();
+                                for (JPanel[] par : conexiones) {
+                                    if (par[0] == clientPanel || par[1] == clientPanel) {
+                                        conexionesDelPanel.add(par);
+                                    }
+                                }
+                                if (conexionesDelPanel.isEmpty()) {
+                                    JOptionPane.showMessageDialog(null, "No hay conexiones para eliminar.", "Sin conexiones", JOptionPane.INFORMATION_MESSAGE);
+                                    return;
+                                }
+                                String[] opciones = new String[conexionesDelPanel.size()];
+                                for (int i = 0; i < conexionesDelPanel.size(); i++) {
+                                    JPanel otro = (conexionesDelPanel.get(i)[0] == clientPanel) ? conexionesDelPanel.get(i)[1] : conexionesDelPanel.get(i)[0];
+                                    String nombre = "";
+                                    for (Component c : otro.getComponents()) {
+                                        if (c instanceof JLabel label && label.getText() != null && !label.getText().isEmpty()) {
+                                            nombre = label.getText();
                                             break;
                                         }
                                     }
-                                    firstSelectedPanel = null;
-                                    centralPanel.repaint();
+                                    opciones[i] = "Conectado a: " + nombre;
+                                }
+                                String seleccion = (String) JOptionPane.showInputDialog(
+                                    null,
+                                    "Seleccione la conexión a eliminar:",
+                                    "Eliminar Conexión",
+                                    JOptionPane.QUESTION_MESSAGE,
+                                    null,
+                                    opciones,
+                                    opciones[0]
+                                );
+                                if (seleccion != null) {
+                                    for (int i = 0; i < opciones.length; i++) {
+                                        if (opciones[i].equals(seleccion)) {
+                                            conexiones.remove(conexionesDelPanel.get(i));
+                                            centralPanel.repaint();
+                                            break;
+                                        }
+                                    }
                                 }
                             });
                             eliminar.addActionListener(ae -> {
