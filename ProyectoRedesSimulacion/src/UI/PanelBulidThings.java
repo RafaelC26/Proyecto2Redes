@@ -18,9 +18,6 @@ public class PanelBulidThings {
     private List<JPanel[]> conexiones = new ArrayList<>();
 
     private double zoomFactor = 1.0;
-    private int offsetX = 0;
-    private int offsetY = 0;
-    private Point dragStartPoint = null;
 
     public PanelBulidThings(Principal principal) {
         this.principal = principal;
@@ -64,323 +61,368 @@ public class PanelBulidThings {
 
         // ---- SERVER ----
         serverButton.addActionListener(e -> {
-            String imagePath = "src\\Images\\server.png";
-            int baseW = 60, baseH = 60;
-            if (serverCurrentSize != null) {
-                baseW = serverCurrentSize.width;
-                baseH = serverCurrentSize.height;
+            int cantidad = 1;
+            boolean valido = false;
+            while (!valido) {
+                String input = JOptionPane.showInputDialog(null, "¿Cuántos servidores desea agregar?", "Agregar Servidores", JOptionPane.QUESTION_MESSAGE);
+                if (input == null) return; // Cancelado
+                try {
+                    cantidad = Integer.parseInt(input);
+                    if (cantidad < 1) throw new NumberFormatException();
+                    valido = true;
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Ingrese un número entero mayor a 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
-            int baseX = 20 * serverCount, baseY = 20 * serverCount;
+            for (int i = 0; i < cantidad; i++) {
+                String imagePath = "src\\Images\\server.png";
+                int baseW = 60, baseH = 60;
+                if (serverCurrentSize != null) {
+                    baseW = serverCurrentSize.width;
+                    baseH = serverCurrentSize.height;
+                }
+                int baseX = 20 * serverCount, baseY = 20 * serverCount;
 
-            ImageIcon originalIcon = new ImageIcon(imagePath);
+                ImageIcon originalIcon = new ImageIcon(imagePath);
 
-            JPanel serverPanel = new JPanel();
-            serverPanel.setLayout(new BoxLayout(serverPanel, BoxLayout.Y_AXIS));
-            serverPanel.setOpaque(false);
+                JPanel serverPanel = new JPanel();
+                serverPanel.setLayout(new BoxLayout(serverPanel, BoxLayout.Y_AXIS));
+                serverPanel.setOpaque(false);
 
-            JLabel serverLabel = new JLabel(new ImageIcon(originalIcon.getImage().getScaledInstance((int)(baseW * zoomFactor), (int)(baseH * zoomFactor), Image.SCALE_SMOOTH)));
-            serverLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+                JLabel serverLabel = new JLabel(new ImageIcon(originalIcon.getImage().getScaledInstance((int)(baseW * zoomFactor), (int)(baseH * zoomFactor), Image.SCALE_SMOOTH)));
+                serverLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
 
-            JLabel nameLabel = new JLabel("Servidor " + serverCount);
-            nameLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-            nameLabel.setForeground(Color.BLACK);
-            float baseFontSize = 10f;
-            nameLabel.setFont(nameLabel.getFont().deriveFont(baseFontSize * (float)zoomFactor));
+                JLabel nameLabel = new JLabel("Servidor " + serverCount);
+                nameLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+                nameLabel.setForeground(Color.BLACK);
+                float baseFontSize = 10f;
+                nameLabel.setFont(nameLabel.getFont().deriveFont(baseFontSize * (float)zoomFactor));
 
-            serverPanel.add(serverLabel);
-            serverPanel.add(nameLabel);
+                serverPanel.add(serverLabel);
+                serverPanel.add(nameLabel);
 
-            serverPanel.setBounds((int)(baseX * zoomFactor), (int)(baseY * zoomFactor), (int)(baseW * zoomFactor), (int)(baseH * zoomFactor) + 20);
+                serverPanel.setBounds((int)(baseX * zoomFactor), (int)(baseY * zoomFactor), (int)(baseW * zoomFactor), (int)(baseH * zoomFactor) + 20);
 
-            serverPanel.putClientProperty("imagePath", imagePath);
-            serverPanel.putClientProperty("baseW", baseW);
-            serverPanel.putClientProperty("baseH", baseH);
-            serverPanel.putClientProperty("baseX", baseX);
-            serverPanel.putClientProperty("baseY", baseY);
+                serverPanel.putClientProperty("imagePath", imagePath);
+                serverPanel.putClientProperty("baseW", baseW);
+                serverPanel.putClientProperty("baseH", baseH);
+                serverPanel.putClientProperty("baseX", baseX);
+                serverPanel.putClientProperty("baseY", baseY);
 
-            serverPanel.addMouseListener(new MouseAdapter() {
-                Point offset;
-                public void mousePressed(MouseEvent evt) {
-                    offset = evt.getPoint();
-                    centralPanel.revalidate();
-                    centralPanel.repaint();
-                    // Mostrar menú de opciones con click derecho
-                    if (SwingUtilities.isRightMouseButton(evt)) {
-                        JPopupMenu menu = new JPopupMenu();
-                        JMenuItem eliminar = new JMenuItem("Eliminar");
-                        JMenuItem conexion = new JMenuItem("Crear Conexión");
-                        JMenuItem Econexion = new JMenuItem("Eliminar Conexión");
-                        Econexion.addActionListener(ae -> {
-                            if (firstSelectedPanel != null && firstSelectedPanel != serverPanel) {
-                                for (JPanel[] par : conexiones) {
-                                    if ((par[0] == firstSelectedPanel && par[1] == serverPanel) || (par[0] == serverPanel && par[1] == firstSelectedPanel)) {
-                                        conexiones.remove(par);
-                                        break;
+                serverPanel.addMouseListener(new MouseAdapter() {
+                    Point offset;
+                    public void mousePressed(MouseEvent evt) {
+                        offset = evt.getPoint();
+                        centralPanel.revalidate();
+                        centralPanel.repaint();
+                        // Mostrar menú de opciones con click derecho
+                        if (SwingUtilities.isRightMouseButton(evt)) {
+                            JPopupMenu menu = new JPopupMenu();
+                            JMenuItem eliminar = new JMenuItem("Eliminar");
+                            JMenuItem conexion = new JMenuItem("Crear Conexión");
+                            JMenuItem Econexion = new JMenuItem("Eliminar Conexión");
+                            Econexion.addActionListener(ae -> {
+                                if (firstSelectedPanel != null && firstSelectedPanel != serverPanel) {
+                                    for (JPanel[] par : conexiones) {
+                                        if ((par[0] == firstSelectedPanel && par[1] == serverPanel) || (par[0] == serverPanel && par[1] == firstSelectedPanel)) {
+                                            conexiones.remove(par);
+                                            break;
+                                        }
                                     }
+                                    firstSelectedPanel = null;
+                                    centralPanel.repaint();
                                 }
-                                firstSelectedPanel = null;
+                            });
+                            eliminar.addActionListener(ae -> {
+                                centralPanel.remove(serverPanel);
+                                centralPanel.revalidate();
                                 centralPanel.repaint();
-                            }
-                        });
-                        eliminar.addActionListener(ae -> {
-                            centralPanel.remove(serverPanel);
-                            centralPanel.revalidate();
+                            });
+                            conexion.addActionListener(ae -> {
+                                firstSelectedPanel = serverPanel;
+                            });
+                            menu.add(eliminar);
+                            menu.add(conexion);
+                            menu.add(Econexion);
+                            menu.show(serverPanel, evt.getX(), evt.getY());
+                        } else if (firstSelectedPanel != null && firstSelectedPanel != serverPanel) {
+                            // Segundo click: crear conexión
+                            conexiones.add(new JPanel[]{firstSelectedPanel, serverPanel});
+                            firstSelectedPanel = null;
                             centralPanel.repaint();
-                        });
-                        conexion.addActionListener(ae -> {
-                            firstSelectedPanel = serverPanel;
-                        });
-                        menu.add(eliminar);
-                        menu.add(conexion);
-                        menu.add(Econexion);
-                        menu.show(serverPanel, evt.getX(), evt.getY());
-                    } else if (firstSelectedPanel != null && firstSelectedPanel != serverPanel) {
-                        // Segundo click: crear conexión
-                        conexiones.add(new JPanel[]{firstSelectedPanel, serverPanel});
-                        firstSelectedPanel = null;
+                        }
+                    }
+                    public void mouseReleased(MouseEvent evt) {
+                        // Actualiza la posición base al soltar
+                        int logicX = (int)(serverPanel.getX() / zoomFactor);
+                        int logicY = (int)(serverPanel.getY() / zoomFactor);
+                        serverPanel.putClientProperty("baseX", logicX);
+                        serverPanel.putClientProperty("baseY", logicY);
+                        centralPanel.revalidate();
                         centralPanel.repaint();
                     }
-                }
-                public void mouseReleased(MouseEvent evt) {
-                    // Actualiza la posición base al soltar
-                    int logicX = (int)(serverPanel.getX() / zoomFactor);
-                    int logicY = (int)(serverPanel.getY() / zoomFactor);
-                    serverPanel.putClientProperty("baseX", logicX);
-                    serverPanel.putClientProperty("baseY", logicY);
-                    centralPanel.revalidate();
-                    centralPanel.repaint();
-                }
-            });
-            serverPanel.addMouseMotionListener(new MouseMotionAdapter() {
-                public void mouseDragged(MouseEvent evt) {
-                    int x = serverPanel.getX() + evt.getX() - serverPanel.getWidth() / 2;
-                    int y = serverPanel.getY() + evt.getY() - serverPanel.getHeight() / 2;
-                    serverPanel.setLocation(x, y);
-                    centralPanel.revalidate();
-                    centralPanel.repaint();
-                }
-            });
+                });
+                serverPanel.addMouseMotionListener(new MouseMotionAdapter() {
+                    public void mouseDragged(MouseEvent evt) {
+                        int x = serverPanel.getX() + evt.getX() - serverPanel.getWidth() / 2;
+                        int y = serverPanel.getY() + evt.getY() - serverPanel.getHeight() / 2;
+                        serverPanel.setLocation(x, y);
+                        centralPanel.revalidate();
+                        centralPanel.repaint();
+                    }
+                });
 
-            centralPanel.add(serverPanel);
-            centralPanel.revalidate();
-            centralPanel.repaint();
+                centralPanel.add(serverPanel);
+                centralPanel.revalidate();
+                centralPanel.repaint();
 
-            if (serverCurrentSize == null) {
-                serverCurrentSize = new Dimension(baseW, baseH);
+                if (serverCurrentSize == null) {
+                    serverCurrentSize = new Dimension(baseW, baseH);
+                }
+                serverCount++;
             }
-            serverCount++;
         });
 
         // ---- ROUTER ----
         routerButton.addActionListener(e -> {
-            String imagePath = "src\\Images\\router.png";
-            int baseW = 60, baseH = 60;
-            if (routerCurrentSize != null) {
-                baseW = routerCurrentSize.width;
-                baseH = routerCurrentSize.height;
+            int cantidad = 1;
+            boolean valido = false;
+            while (!valido) {
+                String input = JOptionPane.showInputDialog(null, "¿Cuántos routers desea agregar?", "Agregar Routers", JOptionPane.QUESTION_MESSAGE);
+                if (input == null) return; // Cancelado
+                try {
+                    cantidad = Integer.parseInt(input);
+                    if (cantidad < 1) throw new NumberFormatException();
+                    valido = true;
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Ingrese un número entero mayor a 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
-            int baseX = 20 * routerCount, baseY = 20 * routerCount;
+            for (int i = 0; i < cantidad; i++) {
+                String imagePath = "src\\Images\\router.png";
+                int baseW = 60, baseH = 60;
+                if (routerCurrentSize != null) {
+                    baseW = routerCurrentSize.width;
+                    baseH = routerCurrentSize.height;
+                }
+                int baseX = 20 * routerCount, baseY = 20 * routerCount;
 
-            ImageIcon originalIcon = new ImageIcon(imagePath);
+                ImageIcon originalIcon = new ImageIcon(imagePath);
 
-            JPanel routerPanel = new JPanel();
-            routerPanel.setLayout(new BoxLayout(routerPanel, BoxLayout.Y_AXIS));
-            routerPanel.setOpaque(false);
+                JPanel routerPanel = new JPanel();
+                routerPanel.setLayout(new BoxLayout(routerPanel, BoxLayout.Y_AXIS));
+                routerPanel.setOpaque(false);
 
-            JLabel routerLabel = new JLabel(new ImageIcon(originalIcon.getImage().getScaledInstance((int)(baseW * zoomFactor), (int)(baseH * zoomFactor), Image.SCALE_SMOOTH)));
-            routerLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+                JLabel routerLabel = new JLabel(new ImageIcon(originalIcon.getImage().getScaledInstance((int)(baseW * zoomFactor), (int)(baseH * zoomFactor), Image.SCALE_SMOOTH)));
+                routerLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
 
-            JLabel nameLabel = new JLabel("Router " + routerCount);
-            nameLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-            nameLabel.setForeground(Color.BLACK);
-            float baseFontSize = 10f;
-            nameLabel.setFont(nameLabel.getFont().deriveFont(baseFontSize * (float)zoomFactor));
+                JLabel nameLabel = new JLabel("Router " + routerCount);
+                nameLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+                nameLabel.setForeground(Color.BLACK);
+                float baseFontSize = 10f;
+                nameLabel.setFont(nameLabel.getFont().deriveFont(baseFontSize * (float)zoomFactor));
 
-            routerPanel.add(routerLabel);
-            routerPanel.add(nameLabel);
+                routerPanel.add(routerLabel);
+                routerPanel.add(nameLabel);
 
-            routerPanel.setBounds((int)(baseX * zoomFactor), (int)(baseY * zoomFactor), (int)(baseW * zoomFactor), (int)(baseH * zoomFactor) + 20);
+                routerPanel.setBounds((int)(baseX * zoomFactor), (int)(baseY * zoomFactor), (int)(baseW * zoomFactor), (int)(baseH * zoomFactor) + 20);
 
-            routerPanel.putClientProperty("imagePath", imagePath);
-            routerPanel.putClientProperty("baseW", baseW);
-            routerPanel.putClientProperty("baseH", baseH);
-            routerPanel.putClientProperty("baseX", baseX);
-            routerPanel.putClientProperty("baseY", baseY);
+                routerPanel.putClientProperty("imagePath", imagePath);
+                routerPanel.putClientProperty("baseW", baseW);
+                routerPanel.putClientProperty("baseH", baseH);
+                routerPanel.putClientProperty("baseX", baseX);
+                routerPanel.putClientProperty("baseY", baseY);
 
-            routerPanel.addMouseListener(new MouseAdapter() {
-                Point offset;
-                public void mousePressed(MouseEvent evt) {
-                    offset = evt.getPoint();
-                    centralPanel.revalidate();
-                    centralPanel.repaint();
-                    if (SwingUtilities.isRightMouseButton(evt)) {
-                        JPopupMenu menu = new JPopupMenu();
-                        JMenuItem eliminar = new JMenuItem("Eliminar");
-                        JMenuItem conexion = new JMenuItem("Crear Conexión");
-                        JMenuItem Econexion = new JMenuItem("Eliminar Conexión");
-                        Econexion.addActionListener(ae -> {
-                            if (firstSelectedPanel != null && firstSelectedPanel != routerPanel) {
-                                for (JPanel[] par : conexiones) {
-                                    if ((par[0] == firstSelectedPanel && par[1] == routerPanel) || (par[0] == routerPanel && par[1] == firstSelectedPanel)) {
-                                        conexiones.remove(par);
-                                        break;
+                routerPanel.addMouseListener(new MouseAdapter() {
+                    Point offset;
+                    public void mousePressed(MouseEvent evt) {
+                        offset = evt.getPoint();
+                        centralPanel.revalidate();
+                        centralPanel.repaint();
+                        if (SwingUtilities.isRightMouseButton(evt)) {
+                            JPopupMenu menu = new JPopupMenu();
+                            JMenuItem eliminar = new JMenuItem("Eliminar");
+                            JMenuItem conexion = new JMenuItem("Crear Conexión");
+                            JMenuItem Econexion = new JMenuItem("Eliminar Conexión");
+                            Econexion.addActionListener(ae -> {
+                                if (firstSelectedPanel != null && firstSelectedPanel != routerPanel) {
+                                    for (JPanel[] par : conexiones) {
+                                        if ((par[0] == firstSelectedPanel && par[1] == routerPanel) || (par[0] == routerPanel && par[1] == firstSelectedPanel)) {
+                                            conexiones.remove(par);
+                                            break;
+                                        }
                                     }
+                                    firstSelectedPanel = null;
+                                    centralPanel.repaint();
                                 }
-                                firstSelectedPanel = null;
+                            });
+                            eliminar.addActionListener(ae -> {
+                                centralPanel.remove(routerPanel);
+                                centralPanel.revalidate();
                                 centralPanel.repaint();
-                            }
-                        });
-                        eliminar.addActionListener(ae -> {
-                            centralPanel.remove(routerPanel);
-                            centralPanel.revalidate();
+                            });
+                            conexion.addActionListener(ae -> {
+                                firstSelectedPanel = routerPanel;
+                            });
+                            menu.add(eliminar);
+                            menu.add(conexion);
+                            menu.add(Econexion);
+                            menu.show(routerPanel, evt.getX(), evt.getY());
+                        } else if (firstSelectedPanel != null && firstSelectedPanel != routerPanel) {
+                            conexiones.add(new JPanel[]{firstSelectedPanel, routerPanel});
+                            firstSelectedPanel = null;
                             centralPanel.repaint();
-                        });
-                        conexion.addActionListener(ae -> {
-                            firstSelectedPanel = routerPanel;
-                        });
-                        menu.add(eliminar);
-                        menu.add(conexion);
-                        menu.add(Econexion);
-                        menu.show(routerPanel, evt.getX(), evt.getY());
-                    } else if (firstSelectedPanel != null && firstSelectedPanel != routerPanel) {
-                        conexiones.add(new JPanel[]{firstSelectedPanel, routerPanel});
-                        firstSelectedPanel = null;
+                        }
+                    }
+                    public void mouseReleased(MouseEvent evt) {
+                        int logicX = (int)(routerPanel.getX() / zoomFactor);
+                        int logicY = (int)(routerPanel.getY() / zoomFactor);
+                        routerPanel.putClientProperty("baseX", logicX);
+                        routerPanel.putClientProperty("baseY", logicY);
+                        centralPanel.revalidate();
                         centralPanel.repaint();
                     }
-                }
-                public void mouseReleased(MouseEvent evt) {
-                    int logicX = (int)(routerPanel.getX() / zoomFactor);
-                    int logicY = (int)(routerPanel.getY() / zoomFactor);
-                    routerPanel.putClientProperty("baseX", logicX);
-                    routerPanel.putClientProperty("baseY", logicY);
-                    centralPanel.revalidate();
-                    centralPanel.repaint();
-                }
-            });
-            routerPanel.addMouseMotionListener(new MouseMotionAdapter() {
-                public void mouseDragged(MouseEvent evt) {
-                    int x = routerPanel.getX() + evt.getX() - routerPanel.getWidth() / 2;
-                    int y = routerPanel.getY() + evt.getY() - routerPanel.getHeight() / 2;
-                    routerPanel.setLocation(x, y);
-                    centralPanel.revalidate();
-                    centralPanel.repaint();
-                }
-            });
+                });
+                routerPanel.addMouseMotionListener(new MouseMotionAdapter() {
+                    public void mouseDragged(MouseEvent evt) {
+                        int x = routerPanel.getX() + evt.getX() - routerPanel.getWidth() / 2;
+                        int y = routerPanel.getY() + evt.getY() - routerPanel.getHeight() / 2;
+                        routerPanel.setLocation(x, y);
+                        centralPanel.revalidate();
+                        centralPanel.repaint();
+                    }
+                });
 
-            centralPanel.add(routerPanel);
-            centralPanel.revalidate();
-            centralPanel.repaint();
+                centralPanel.add(routerPanel);
+                centralPanel.revalidate();
+                centralPanel.repaint();
 
-            if (routerCurrentSize == null) {
-                routerCurrentSize = new Dimension(baseW, baseH);
+                if (routerCurrentSize == null) {
+                    routerCurrentSize = new Dimension(baseW, baseH);
+                }
+                routerCount++;
             }
-            routerCount++;
         });
 
         // ---- CLIENT ----
         clientButton.addActionListener(e -> {
-            String imagePath = "src\\Images\\computer.png";
-            int baseW = 80, baseH = 80;
-            if (computerCurrentSize != null) {
-                baseW = computerCurrentSize.width;
-                baseH = computerCurrentSize.height;
+            int cantidad = 1;
+            boolean valido = false;
+            while (!valido) {
+                String input = JOptionPane.showInputDialog(null, "¿Cuántos clientes desea agregar?", "Agregar Clientes", JOptionPane.QUESTION_MESSAGE);
+                if (input == null) return; // Cancelado
+                try {
+                    cantidad = Integer.parseInt(input);
+                    if (cantidad < 1) throw new NumberFormatException();
+                    valido = true;
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Ingrese un número entero mayor a 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
-            int baseX = 100 + 20 * computerCount, baseY = 20 * computerCount;
+            for (int i = 0; i < cantidad; i++) {
+                String imagePath = "src\\Images\\computer.png";
+                int baseW = 80, baseH = 80;
+                if (computerCurrentSize != null) {
+                    baseW = computerCurrentSize.width;
+                    baseH = computerCurrentSize.height;
+                }
+                int baseX = 100 + 20 * computerCount, baseY = 20 * computerCount;
 
-            ImageIcon originalIcon = new ImageIcon(imagePath);
+                ImageIcon originalIcon = new ImageIcon(imagePath);
 
-            JPanel clientPanel = new JPanel();
-            clientPanel.setLayout(new BoxLayout(clientPanel, BoxLayout.Y_AXIS));
-            clientPanel.setOpaque(false);
+                JPanel clientPanel = new JPanel();
+                clientPanel.setLayout(new BoxLayout(clientPanel, BoxLayout.Y_AXIS));
+                clientPanel.setOpaque(false);
 
-            JLabel clientLabel = new JLabel(new ImageIcon(originalIcon.getImage().getScaledInstance((int)(baseW * zoomFactor), (int)(baseH * zoomFactor), Image.SCALE_SMOOTH)));
-            clientLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+                JLabel clientLabel = new JLabel(new ImageIcon(originalIcon.getImage().getScaledInstance((int)(baseW * zoomFactor), (int)(baseH * zoomFactor), Image.SCALE_SMOOTH)));
+                clientLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
 
-            JLabel nameLabel = new JLabel("PC " + computerCount);
-            nameLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
-            nameLabel.setForeground(Color.BLACK);
-            float baseFontSize = 10f;
-            nameLabel.setFont(nameLabel.getFont().deriveFont(baseFontSize * (float)zoomFactor));
+                JLabel nameLabel = new JLabel("PC " + computerCount);
+                nameLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+                nameLabel.setForeground(Color.BLACK);
+                float baseFontSize = 10f;
+                nameLabel.setFont(nameLabel.getFont().deriveFont(baseFontSize * (float)zoomFactor));
 
-            clientPanel.add(clientLabel);
-            clientPanel.add(nameLabel);
+                clientPanel.add(clientLabel);
+                clientPanel.add(nameLabel);
 
-            clientPanel.setBounds((int)(baseX * zoomFactor), (int)(baseY * zoomFactor), (int)(baseW * zoomFactor), (int)(baseH * zoomFactor) + 20);
+                clientPanel.setBounds((int)(baseX * zoomFactor), (int)(baseY * zoomFactor), (int)(baseW * zoomFactor), (int)(baseH * zoomFactor) + 20);
 
-            clientPanel.putClientProperty("imagePath", imagePath);
-            clientPanel.putClientProperty("baseW", baseW);
-            clientPanel.putClientProperty("baseH", baseH);
-            clientPanel.putClientProperty("baseX", baseX);
-            clientPanel.putClientProperty("baseY", baseY);
+                clientPanel.putClientProperty("imagePath", imagePath);
+                clientPanel.putClientProperty("baseW", baseW);
+                clientPanel.putClientProperty("baseH", baseH);
+                clientPanel.putClientProperty("baseX", baseX);
+                clientPanel.putClientProperty("baseY", baseY);
 
-            clientPanel.addMouseListener(new MouseAdapter() {
-                Point offset;
-                public void mousePressed(MouseEvent evt) {
-                    offset = evt.getPoint();
-                    centralPanel.revalidate();
-                    centralPanel.repaint();
-                    if (SwingUtilities.isRightMouseButton(evt)) {
-                        JPopupMenu menu = new JPopupMenu();
-                        JMenuItem eliminar = new JMenuItem("Eliminar");
-                        JMenuItem conexion = new JMenuItem("Crear Conexión");
-                        JMenuItem Econexion = new JMenuItem("Eliminar Conexión");
-                        Econexion.addActionListener(ae -> {
-                            if (firstSelectedPanel != null && firstSelectedPanel != clientPanel) {
-                                for (JPanel[] par : conexiones) {
-                                    if ((par[0] == firstSelectedPanel && par[1] == clientPanel) || (par[0] == clientPanel && par[1] == firstSelectedPanel)) {
-                                        conexiones.remove(par);
-                                        break;
+                clientPanel.addMouseListener(new MouseAdapter() {
+                    Point offset;
+                    public void mousePressed(MouseEvent evt) {
+                        offset = evt.getPoint();
+                        centralPanel.revalidate();
+                        centralPanel.repaint();
+                        if (SwingUtilities.isRightMouseButton(evt)) {
+                            JPopupMenu menu = new JPopupMenu();
+                            JMenuItem eliminar = new JMenuItem("Eliminar");
+                            JMenuItem conexion = new JMenuItem("Crear Conexión");
+                            JMenuItem Econexion = new JMenuItem("Eliminar Conexión");
+                            Econexion.addActionListener(ae -> {
+                                if (firstSelectedPanel != null && firstSelectedPanel != clientPanel) {
+                                    for (JPanel[] par : conexiones) {
+                                        if ((par[0] == firstSelectedPanel && par[1] == clientPanel) || (par[0] == clientPanel && par[1] == firstSelectedPanel)) {
+                                            conexiones.remove(par);
+                                            break;
+                                        }
                                     }
+                                    firstSelectedPanel = null;
+                                    centralPanel.repaint();
                                 }
-                                firstSelectedPanel = null;
+                            });
+                            eliminar.addActionListener(ae -> {
+                                centralPanel.remove(clientPanel);
+                                centralPanel.revalidate();
                                 centralPanel.repaint();
-                            }
-                        });
-                        eliminar.addActionListener(ae -> {
-                            centralPanel.remove(clientPanel);
-                            centralPanel.revalidate();
+                            });
+                            conexion.addActionListener(ae -> {
+                                firstSelectedPanel = clientPanel;
+                            });
+                            menu.add(eliminar);
+                            menu.add(conexion);
+                            menu.add(Econexion);
+                            menu.show(clientPanel, evt.getX(), evt.getY());
+                        } else if (firstSelectedPanel != null && firstSelectedPanel != clientPanel) {
+                            conexiones.add(new JPanel[]{firstSelectedPanel, clientPanel});
+                            firstSelectedPanel = null;
                             centralPanel.repaint();
-                        });
-                        conexion.addActionListener(ae -> {
-                            firstSelectedPanel = clientPanel;
-                        });
-                        menu.add(eliminar);
-                        menu.add(conexion);
-                        menu.add(Econexion);
-                        menu.show(clientPanel, evt.getX(), evt.getY());
-                    } else if (firstSelectedPanel != null && firstSelectedPanel != clientPanel) {
-                        conexiones.add(new JPanel[]{firstSelectedPanel, clientPanel});
-                        firstSelectedPanel = null;
+                        }
+                    }
+                    public void mouseReleased(MouseEvent evt) {
+                        int logicX = (int)(clientPanel.getX() / zoomFactor);
+                        int logicY = (int)(clientPanel.getY() / zoomFactor);
+                        clientPanel.putClientProperty("baseX", logicX);
+                        clientPanel.putClientProperty("baseY", logicY);
+                        centralPanel.revalidate();
                         centralPanel.repaint();
                     }
-                }
-                public void mouseReleased(MouseEvent evt) {
-                    int logicX = (int)(clientPanel.getX() / zoomFactor);
-                    int logicY = (int)(clientPanel.getY() / zoomFactor);
-                    clientPanel.putClientProperty("baseX", logicX);
-                    clientPanel.putClientProperty("baseY", logicY);
-                    centralPanel.revalidate();
-                    centralPanel.repaint();
-                }
-            });
-            clientPanel.addMouseMotionListener(new MouseMotionAdapter() {
-                public void mouseDragged(MouseEvent evt) {
-                    int x = clientPanel.getX() + evt.getX() - clientPanel.getWidth() / 2;
-                    int y = clientPanel.getY() + evt.getY() - clientPanel.getHeight() / 2;
-                    clientPanel.setLocation(x, y);
-                    centralPanel.revalidate();
-                    centralPanel.repaint();
-                }
-            });
+                });
+                clientPanel.addMouseMotionListener(new MouseMotionAdapter() {
+                    public void mouseDragged(MouseEvent evt) {
+                        int x = clientPanel.getX() + evt.getX() - clientPanel.getWidth() / 2;
+                        int y = clientPanel.getY() + evt.getY() - clientPanel.getHeight() / 2;
+                        clientPanel.setLocation(x, y);
+                        centralPanel.revalidate();
+                        centralPanel.repaint();
+                    }
+                });
 
-            centralPanel.add(clientPanel);
-            centralPanel.revalidate();
-            centralPanel.repaint();
+                centralPanel.add(clientPanel);
+                centralPanel.revalidate();
+                centralPanel.repaint();
 
-            if (computerCurrentSize == null) {
-                computerCurrentSize = new Dimension(baseW, baseH);
+                if (computerCurrentSize == null) {
+                    computerCurrentSize = new Dimension(baseW, baseH);
+                }
+                computerCount++;
             }
-            computerCount++;
         });
 
         panel.add(routerButton);

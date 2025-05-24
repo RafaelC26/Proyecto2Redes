@@ -25,7 +25,6 @@ public class Principal extends JFrame {
 
         panelCentral.addMouseWheelListener(new MouseWheelListener() {
             public void mouseWheelMoved(MouseWheelEvent e) {
-                double oldZoom = zoomFactor;
                 if (e.getPreciseWheelRotation() < 0) {
                     zoomFactor *= 1.1; 
                 } else {
