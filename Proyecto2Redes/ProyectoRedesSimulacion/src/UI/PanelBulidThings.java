@@ -1,0 +1,793 @@
+import java.awt.*;
+import java.awt.event.*;
+import java.util.List;
+import java.util.Map;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
+import javax.swing.*;
+
+public class PanelBulidThings {
+    private Principal principal;
+    private JPanel centralPanel;
+    private List<JPanel[]> conexiones;
+    private int routerCount = 1;
+    private int serverCount = 1;
+    private int computerCount = 1;
+    private Dimension routerCurrentSize = null;
+    private Dimension computerCurrentSize = null;
+    private Dimension serverCurrentSize = null;
+
+    private JPanel firstSelectedPanel = null;
+    private double zoomFactor = 1.0;
+
+    public PanelBulidThings(Principal principal, JPanel centralPanel, List<JPanel[]> conexiones) {
+        this.principal = principal;
+        this.centralPanel = centralPanel;
+        this.conexiones = conexiones;
+        this.centralPanel.setLayout(null);
+    }
+
+    public JPanel build() {
+        JPanel panelTotal = new JPanel(new BorderLayout());
+        panelTotal.setBackground(new Color(245, 249, 255));
+        panelTotal.setPreferredSize(new Dimension(0, 100));
+
+        JLabel label = new JLabel("Componentes");
+        label.setFont(label.getFont().deriveFont(16f));
+        label.setForeground(Color.BLACK);
+        label.setHorizontalAlignment(JLabel.LEFT); 
+        label.setAlignmentX(Component.LEFT_ALIGNMENT); 
+
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 20, 10));
+        panel.setBackground(new Color(245, 249, 255));
+
+        JPanel panelCentro = new JPanel();
+        panelCentro.setBackground(new Color(245, 249, 255));
+        panelCentro.setLayout(new FlowLayout(FlowLayout.LEFT, 450, 10)); 
+
+        JLabel labelCaja = new JLabel("Inciar entrega de paquetes");
+        labelCaja.setFont(label.getFont().deriveFont(16f));
+        labelCaja.setForeground(Color.BLACK);
+        labelCaja.setHorizontalAlignment(JLabel.CENTER); 
+        labelCaja.setAlignmentX(Component.CENTER_ALIGNMENT); 
+
+        String boxImagePath = "src\\Images\\caja.png"; 
+        JButton boxButton = new JButton();
+        boxButton.setIcon(new ImageIcon(new ImageIcon(boxImagePath).getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH)));
+        boxButton.setToolTipText("Iniciar entrega de paquetes");
+        boxButton.setPreferredSize(new Dimension(60, 60));
+        boxButton.setFocusPainted(false);
+        boxButton.setContentAreaFilled(false);
+        boxButton.setBorderPainted(false);
+
+        boxButton.addActionListener(e -> {
+            if (conexiones == null || conexiones.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Debe existir al menos una conexión para iniciar la entrega de paquetes.", "Error", JOptionPane.ERROR_MESSAGE);
+            } else {
+                Set<JPanel> procesados = new HashSet<>();
+                Map<JPanel, Integer> paquetesPorPanel = new HashMap<>();
+                for (JPanel[] par : conexiones) {
+                    for (int i = 0; i < 2; i++) {
+                        JPanel panelComp = par[i];
+                        if (procesados.contains(panelComp)) continue; 
+                        procesados.add(panelComp);
+
+                        String nombre = "Componente";
+                        boolean esServidor = false;
+                        for (Component c : panelComp.getComponents()) {
+                            if (c instanceof JLabel) {
+                                JLabel labell = (JLabel) c;
+                                if (labell.getText() != null && !labell.getText().isEmpty()) {
+                                    nombre = labell.getText();
+                                    if (nombre.toLowerCase().contains("servidor")) {
+                                        esServidor = true;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!esServidor) {
+                            Integer cantidad = null;
+                            while (cantidad == null) {
+                                String input = JOptionPane.showInputDialog(null, "¿Cuántos paquetes desea entregar a " + nombre + "?", "Entrega de paquetes", JOptionPane.QUESTION_MESSAGE);
+                                if (input == null) break; 
+                                try {
+                                    int val = Integer.parseInt(input);
+                                    if (val < 1) throw new NumberFormatException();
+                                    cantidad = val;
+                                    paquetesPorPanel.put(panelComp, cantidad);
+                                    JOptionPane.showMessageDialog(null, "Se entregarán " + cantidad + " paquetes a " + nombre + ".", "Entrega", JOptionPane.INFORMATION_MESSAGE);
+                                } catch (NumberFormatException ex) {
+                                    JOptionPane.showMessageDialog(null, "Ingrese un número entero mayor a 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // --- ANIMACIÓN DE PAQUETES DESDE SERVIDOR ---
+                Image cajaImg = new ImageIcon("src\\Images\\caja.png").getImage();
+
+                for (JPanel[] par : conexiones) {
+                    JPanel servidor = null, destino = null;
+                    for (int i = 0; i < 2; i++) {
+                        String nombre = "";
+                        for (Component c : par[i].getComponents()) {
+                            if (c instanceof JLabel) {
+                                JLabel labell = (JLabel) c;
+                                if (labell.getText() != null) {
+                                    nombre = labell.getText().toLowerCase();
+                                    break;
+                                }
+                            }
+                        }
+                        if (nombre.contains("servidor")) {
+                            servidor = par[i];
+                            destino = par[1 - i];
+                            break;
+                        }
+                    }
+                    if (servidor != null && destino != null && paquetesPorPanel.containsKey(destino)) {
+                        int cantidad = paquetesPorPanel.get(destino);
+                        Point p1 = servidor.getLocation();
+                        Point p2 = destino.getLocation();
+                        int startX = p1.x + servidor.getWidth() / 2;
+                        int startY = p1.y + servidor.getHeight() / 2;
+                        int endX = p2.x + destino.getWidth() / 2;
+                        int endY = p2.y + destino.getHeight() / 2;
+
+                        final int[] enviados = {0};
+                        Timer timer = new Timer(150, null);
+                        timer.addActionListener(ev -> {
+                            if (enviados[0] < cantidad) {
+                                PaqueteAnimado paquete = new PaqueteAnimado(startX, startY, endX, endY, centralPanel, cajaImg);
+                                centralPanel.add(paquete, 0);
+                                centralPanel.setComponentZOrder(paquete, 0);
+                                centralPanel.repaint();
+                                enviados[0]++;
+                            } else {
+                                timer.stop();
+                            }
+                        });
+                        timer.start();
+                    }
+                }
+            }
+        });
+
+        panelCentro.add(labelCaja);
+        panelCentro.add(boxButton);
+
+        JButton routerButton = MenuThings.createRouterButton();
+        JButton clientButton = MenuThings.createClientButton();
+        JButton serverButton = MenuThings.createServerButton();
+
+        // ---- SERVER ----
+        serverButton.addActionListener(e -> {
+            int cantidad = 1;
+            boolean valido = false;
+            while (!valido) {
+                String input = JOptionPane.showInputDialog(null, "¿Cuántos servidores desea agregar?", "Agregar Servidores", JOptionPane.QUESTION_MESSAGE);
+                if (input == null) return; 
+                try {
+                    cantidad = Integer.parseInt(input);
+                    if (cantidad < 1) throw new NumberFormatException();
+                    valido = true;
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Ingrese un número entero mayor a 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+            for (int i = 0; i < cantidad; i++) {
+                String imagePath = "src\\Images\\server.png";
+                int baseW = 60, baseH = 60;
+                if (serverCurrentSize != null) {
+                    baseW = serverCurrentSize.width;
+                    baseH = serverCurrentSize.height;
+                }
+                int baseX = 20 * serverCount, baseY = 20 * serverCount;
+
+                ImageIcon originalIcon = new ImageIcon(imagePath);
+
+                JPanel serverPanel = new JPanel();
+                serverPanel.setLayout(new BoxLayout(serverPanel, BoxLayout.Y_AXIS));
+                serverPanel.setOpaque(false);
+
+                JLabel serverLabel = new JLabel(new ImageIcon(originalIcon.getImage().getScaledInstance((int)(baseW * zoomFactor), (int)(baseH * zoomFactor), Image.SCALE_SMOOTH)));
+                serverLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+
+                JLabel nameLabel = new JLabel("Servidor " + serverCount);
+                nameLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+                nameLabel.setForeground(Color.BLACK);
+                float baseFontSize = 10f;
+                nameLabel.setFont(nameLabel.getFont().deriveFont(baseFontSize * (float)zoomFactor));
+
+                serverPanel.add(serverLabel);
+                serverPanel.add(nameLabel);
+
+                int textWidth = nameLabel.getPreferredSize().width;
+                int panelWidth = Math.max((int)(baseW * zoomFactor), textWidth + 10);
+                serverPanel.setBounds((int)(baseX * zoomFactor), (int)(baseY * zoomFactor), panelWidth, (int)(baseH * zoomFactor) + 20);
+
+                serverPanel.putClientProperty("imagePath", imagePath);
+                serverPanel.putClientProperty("baseW", baseW);
+                serverPanel.putClientProperty("baseH", baseH);
+                serverPanel.putClientProperty("baseX", baseX);
+                serverPanel.putClientProperty("baseY", baseY);
+
+                serverPanel.addMouseListener(new MouseAdapter() {
+                    Point offset;
+                    public void mousePressed(MouseEvent evt) {
+                        offset = evt.getPoint();
+                        centralPanel.revalidate();
+                        centralPanel.repaint();
+                        if (SwingUtilities.isRightMouseButton(evt)) {
+                            JPopupMenu menu = new JPopupMenu();
+                            JMenuItem eliminar = new JMenuItem("Eliminar");
+                            JMenuItem conexion = new JMenuItem("Crear Conexión");
+                            JMenuItem Econexion = new JMenuItem("Eliminar Conexión");
+
+                            JMenu modificarDatos = new JMenu("Modificar Datos");
+                            JMenuItem cambiarNombre = new JMenuItem("Cambiar nombre");
+                            JMenuItem cambiarLatencia = new JMenuItem("Cambiar latencia");
+
+                            cambiarNombre.addActionListener(ae -> {
+                                String nuevoNombre = JOptionPane.showInputDialog(null, "Nuevo nombre:", "Cambiar nombre", JOptionPane.QUESTION_MESSAGE);
+                                if (nuevoNombre != null && !nuevoNombre.trim().isEmpty()) {
+                                    int labelCount = 0;
+                                    JLabel nameLabelRef = null;
+                                    for (Component c : serverPanel.getComponents()) {
+                                        if (c instanceof JLabel label) {
+                                            labelCount++;
+                                            if (labelCount == 2) { 
+                                                label.setText(nuevoNombre);
+                                                nameLabelRef = label;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (nameLabelRef != null) {
+                                        int textWidth2 = nameLabelRef.getPreferredSize().width;
+                                        int panelWidth2 = Math.max(serverPanel.getWidth(), textWidth2 + 10);
+                                        serverPanel.setSize(panelWidth2, serverPanel.getHeight());
+                                        serverPanel.setPreferredSize(new Dimension(panelWidth2, serverPanel.getHeight()));
+                                    }
+                                    centralPanel.revalidate();
+                                    centralPanel.repaint();
+                                }
+                            });
+
+                            cambiarLatencia.addActionListener(ae -> {
+                                String nuevaLatencia = JOptionPane.showInputDialog(null, "Nueva latencia (ms):", "Cambiar latencia", JOptionPane.QUESTION_MESSAGE);
+                                if (nuevaLatencia != null && !nuevaLatencia.trim().isEmpty()) {
+                                    try {
+                                        int lat = Integer.parseInt(nuevaLatencia);
+                                        serverPanel.putClientProperty("latencia", lat);
+                                        JOptionPane.showMessageDialog(null, "Latencia cambiada a " + lat + " ms");
+                                    } catch (NumberFormatException ex) {
+                                        JOptionPane.showMessageDialog(null, "Valor no válido.", "Error", JOptionPane.ERROR_MESSAGE);
+                                    }
+                                }
+                            });
+
+                            modificarDatos.add(cambiarNombre);
+                            modificarDatos.add(cambiarLatencia);
+
+                            Econexion.addActionListener(ae -> {
+                                List<JPanel[]> conexionesDelPanel = new ArrayList<>();
+                                for (JPanel[] par : conexiones) {
+                                    if (par[0] == serverPanel || par[1] == serverPanel) {
+                                        conexionesDelPanel.add(par);
+                                    }
+                                }
+                                if (conexionesDelPanel.isEmpty()) {
+                                    JOptionPane.showMessageDialog(null, "No hay conexiones para eliminar.", "Sin conexiones", JOptionPane.INFORMATION_MESSAGE);
+                                    return;
+                                }
+                                String[] opciones = new String[conexionesDelPanel.size()];
+                                for (int i = 0; i < conexionesDelPanel.size(); i++) {
+                                    JPanel otro = (conexionesDelPanel.get(i)[0] == serverPanel) ? conexionesDelPanel.get(i)[1] : conexionesDelPanel.get(i)[0];
+                                    String nombre = "";
+                                    for (Component c : otro.getComponents()) {
+                                        if (c instanceof JLabel label && label.getText() != null && !label.getText().isEmpty()) {
+                                            nombre = label.getText();
+                                            break;
+                                        }
+                                    }
+                                    opciones[i] = "Conectado a: " + nombre;
+                                }
+                                String seleccion = (String) JOptionPane.showInputDialog(
+                                    null,
+                                    "Seleccione la conexión a eliminar:",
+                                    "Eliminar Conexión",
+                                    JOptionPane.QUESTION_MESSAGE,
+                                    null,
+                                    opciones,
+                                    opciones[0]
+                                );
+                                if (seleccion != null) {
+                                    for (int i = 0; i < opciones.length; i++) {
+                                        if (opciones[i].equals(seleccion)) {
+                                            conexiones.remove(conexionesDelPanel.get(i));
+                                            centralPanel.repaint();
+                                            break;
+                                        }
+                                    }
+                                }
+                            });
+                            eliminar.addActionListener(ae -> {
+                                conexiones.removeIf(par -> par[0] == serverPanel || par[1] == serverPanel);
+                                centralPanel.remove(serverPanel);
+                                centralPanel.revalidate();
+                                centralPanel.repaint();
+                            });
+                            conexion.addActionListener(ae -> {
+                                firstSelectedPanel = serverPanel;
+                            });
+                            menu.add(eliminar);
+                            menu.add(conexion);
+                            menu.add(Econexion);
+                            menu.add(modificarDatos);
+                            menu.show(serverPanel, evt.getX(), evt.getY());
+                        } else if (firstSelectedPanel != null && firstSelectedPanel != serverPanel) {
+                            conexiones.add(new JPanel[]{firstSelectedPanel, serverPanel});
+                            firstSelectedPanel = null;
+                            centralPanel.repaint();
+                        }
+                    }
+                    public void mouseReleased(MouseEvent evt) {
+                        int logicX = (int)(serverPanel.getX() / zoomFactor);
+                        int logicY = (int)(serverPanel.getY() / zoomFactor);
+                        serverPanel.putClientProperty("baseX", logicX);
+                        serverPanel.putClientProperty("baseY", logicY);
+                        centralPanel.revalidate();
+                        centralPanel.repaint();
+                    }
+                });
+                serverPanel.addMouseMotionListener(new MouseMotionAdapter() {
+                    public void mouseDragged(MouseEvent evt) {
+                        int x = serverPanel.getX() + evt.getX() - serverPanel.getWidth() / 2;
+                        int y = serverPanel.getY() + evt.getY() - serverPanel.getHeight() / 2;
+                        serverPanel.setLocation(x, y);
+                        centralPanel.revalidate();
+                        centralPanel.repaint();
+                    }
+                });
+
+                centralPanel.add(serverPanel);
+                centralPanel.revalidate();
+                centralPanel.repaint();
+
+                if (serverCurrentSize == null) {
+                    serverCurrentSize = new Dimension(baseW, baseH);
+                }
+                serverCount++;
+            }
+        });
+
+        // ---- ROUTER ----
+        routerButton.addActionListener(e -> {
+            int cantidad = 1;
+            boolean valido = false;
+            while (!valido) {
+                String input = JOptionPane.showInputDialog(null, "¿Cuántos routers desea agregar?", "Agregar Routers", JOptionPane.QUESTION_MESSAGE);
+                if (input == null) return; 
+                try {
+                    cantidad = Integer.parseInt(input);
+                    if (cantidad < 1) throw new NumberFormatException();
+                    valido = true;
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Ingrese un número entero mayor a 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+            for (int i = 0; i < cantidad; i++) {
+                String imagePath = "src\\Images\\router.png";
+                int baseW = 60, baseH = 60;
+                if (routerCurrentSize != null) {
+                    baseW = routerCurrentSize.width;
+                    baseH = routerCurrentSize.height;
+                }
+                int baseX = 20 * routerCount, baseY = 20 * routerCount;
+
+                ImageIcon originalIcon = new ImageIcon(imagePath);
+
+                JPanel routerPanel = new JPanel();
+                routerPanel.setLayout(new BoxLayout(routerPanel, BoxLayout.Y_AXIS));
+                routerPanel.setOpaque(false);
+
+                JLabel routerLabel = new JLabel(new ImageIcon(originalIcon.getImage().getScaledInstance((int)(baseW * zoomFactor), (int)(baseH * zoomFactor), Image.SCALE_SMOOTH)));
+                routerLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+
+                JLabel nameLabel = new JLabel("Router " + routerCount);
+                nameLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+                nameLabel.setForeground(Color.BLACK);
+                float baseFontSize = 10f;
+                nameLabel.setFont(nameLabel.getFont().deriveFont(baseFontSize * (float)zoomFactor));
+
+                routerPanel.add(routerLabel);
+                routerPanel.add(nameLabel);
+
+                int textWidth = nameLabel.getPreferredSize().width;
+                int panelWidth = Math.max((int)(baseW * zoomFactor), textWidth + 10);
+                routerPanel.setBounds((int)(baseX * zoomFactor), (int)(baseY * zoomFactor), panelWidth, (int)(baseH * zoomFactor) + 20);
+
+                routerPanel.putClientProperty("imagePath", imagePath);
+                routerPanel.putClientProperty("baseW", baseW);
+                routerPanel.putClientProperty("baseH", baseH);
+                routerPanel.putClientProperty("baseX", baseX);
+                routerPanel.putClientProperty("baseY", baseY);
+
+                routerPanel.addMouseListener(new MouseAdapter() {
+                    Point offset;
+                    public void mousePressed(MouseEvent evt) {
+                        offset = evt.getPoint();
+                        centralPanel.revalidate();
+                        centralPanel.repaint();
+                        if (SwingUtilities.isRightMouseButton(evt)) {
+                            JPopupMenu menu = new JPopupMenu();
+                            JMenuItem eliminar = new JMenuItem("Eliminar");
+                            JMenuItem conexion = new JMenuItem("Crear Conexión");
+                            JMenuItem Econexion = new JMenuItem("Eliminar Conexión");
+
+                            JMenu modificarDatos = new JMenu("Modificar Datos");
+                            JMenuItem cambiarNombre = new JMenuItem("Cambiar nombre");
+                            JMenuItem cambiarLatencia = new JMenuItem("Cambiar latencia");
+
+                            cambiarNombre.addActionListener(ae -> {
+                                String nuevoNombre = JOptionPane.showInputDialog(null, "Nuevo nombre:", "Cambiar nombre", JOptionPane.QUESTION_MESSAGE);
+                                if (nuevoNombre != null && !nuevoNombre.trim().isEmpty()) {
+                                    int labelCount = 0;
+                                    JLabel nameLabelRef = null;
+                                    for (Component c : routerPanel.getComponents()) {
+                                        if (c instanceof JLabel label) {
+                                            labelCount++;
+                                            if (labelCount == 2) {
+                                                label.setText(nuevoNombre);
+                                                nameLabelRef = label;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (nameLabelRef != null) {
+                                        int textWidth2 = nameLabelRef.getPreferredSize().width;
+                                        int panelWidth2 = Math.max(routerPanel.getWidth(), textWidth2 + 10);
+                                        routerPanel.setSize(panelWidth2, routerPanel.getHeight());
+                                        routerPanel.setPreferredSize(new Dimension(panelWidth2, routerPanel.getHeight()));
+                                    }
+                                    centralPanel.revalidate();
+                                    centralPanel.repaint();
+                                }
+                            });
+
+                            cambiarLatencia.addActionListener(ae -> {
+                                String nuevaLatencia = JOptionPane.showInputDialog(null, "Nueva latencia (ms):", "Cambiar latencia", JOptionPane.QUESTION_MESSAGE);
+                                if (nuevaLatencia != null && !nuevaLatencia.trim().isEmpty()) {
+                                    try {
+                                        int lat = Integer.parseInt(nuevaLatencia);
+                                        routerPanel.putClientProperty("latencia", lat);
+                                        JOptionPane.showMessageDialog(null, "Latencia cambiada a " + lat + " ms");
+                                    } catch (NumberFormatException ex) {
+                                        JOptionPane.showMessageDialog(null, "Valor no válido.", "Error", JOptionPane.ERROR_MESSAGE);
+                                    }
+                                }
+                            });
+
+                            modificarDatos.add(cambiarNombre);
+                            modificarDatos.add(cambiarLatencia);
+
+                            Econexion.addActionListener(ae -> {
+                                List<JPanel[]> conexionesDelPanel = new ArrayList<>();
+                                for (JPanel[] par : conexiones) {
+                                    if (par[0] == routerPanel || par[1] == routerPanel) {
+                                        conexionesDelPanel.add(par);
+                                    }
+                                }
+                                if (conexionesDelPanel.isEmpty()) {
+                                    JOptionPane.showMessageDialog(null, "No hay conexiones para eliminar.", "Sin conexiones", JOptionPane.INFORMATION_MESSAGE);
+                                    return;
+                                }
+                                String[] opciones = new String[conexionesDelPanel.size()];
+                                for (int i = 0; i < conexionesDelPanel.size(); i++) {
+                                    JPanel otro = (conexionesDelPanel.get(i)[0] == routerPanel) ? conexionesDelPanel.get(i)[1] : conexionesDelPanel.get(i)[0];
+                                    String nombre = "";
+                                    for (Component c : otro.getComponents()) {
+                                        if (c instanceof JLabel label && label.getText() != null && !label.getText().isEmpty()) {
+                                            nombre = label.getText();
+                                            break;
+                                        }
+                                    }
+                                    opciones[i] = "Conectado a: " + nombre;
+                                }
+                                String seleccion = (String) JOptionPane.showInputDialog(
+                                    null,
+                                    "Seleccione la conexión a eliminar:",
+                                    "Eliminar Conexión",
+                                    JOptionPane.QUESTION_MESSAGE,
+                                    null,
+                                    opciones,
+                                    opciones[0]
+                                );
+                                if (seleccion != null) {
+                                    for (int i = 0; i < opciones.length; i++) {
+                                        if (opciones[i].equals(seleccion)) {
+                                            conexiones.remove(conexionesDelPanel.get(i));
+                                            centralPanel.repaint();
+                                            break;
+                                        }
+                                    }
+                                }
+                            });
+                            eliminar.addActionListener(ae -> {
+                                conexiones.removeIf(par -> par[0] == routerPanel || par[1] == routerPanel);
+                                centralPanel.remove(routerPanel);
+                                centralPanel.revalidate();
+                                centralPanel.repaint();
+                            });
+                            conexion.addActionListener(ae -> {
+                                firstSelectedPanel = routerPanel;
+                            });
+                            menu.add(eliminar);
+                            menu.add(conexion);
+                            menu.add(Econexion);
+                            menu.add(modificarDatos);
+                            menu.show(routerPanel, evt.getX(), evt.getY());
+                        } else if (firstSelectedPanel != null && firstSelectedPanel != routerPanel) {
+                            conexiones.add(new JPanel[]{firstSelectedPanel, routerPanel});
+                            firstSelectedPanel = null;
+                            centralPanel.repaint();
+                        }
+                    }
+                    public void mouseReleased(MouseEvent evt) {
+                        int logicX = (int)(routerPanel.getX() / zoomFactor);
+                        int logicY = (int)(routerPanel.getY() / zoomFactor);
+                        routerPanel.putClientProperty("baseX", logicX);
+                        routerPanel.putClientProperty("baseY", logicY);
+                        centralPanel.revalidate();
+                        centralPanel.repaint();
+                    }
+                });
+                routerPanel.addMouseMotionListener(new MouseMotionAdapter() {
+                    public void mouseDragged(MouseEvent evt) {
+                        int x = routerPanel.getX() + evt.getX() - routerPanel.getWidth() / 2;
+                        int y = routerPanel.getY() + evt.getY() - routerPanel.getHeight() / 2;
+                        routerPanel.setLocation(x, y);
+                        centralPanel.revalidate();
+                        centralPanel.repaint();
+                    }
+                });
+
+                centralPanel.add(routerPanel);
+                centralPanel.revalidate();
+                centralPanel.repaint();
+
+                if (routerCurrentSize == null) {
+                    routerCurrentSize = new Dimension(baseW, baseH);
+                }
+                routerCount++;
+            }
+        });
+
+        // ---- CLIENT ----
+        clientButton.addActionListener(e -> {
+            int cantidad = 1;
+            boolean valido = false;
+            while (!valido) {
+                String input = JOptionPane.showInputDialog(null, "¿Cuántos clientes desea agregar?", "Agregar Clientes", JOptionPane.QUESTION_MESSAGE);
+                if (input == null) return;
+                try {
+                    cantidad = Integer.parseInt(input);
+                    if (cantidad < 1) throw new NumberFormatException();
+                    valido = true;
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(null, "Ingrese un número entero mayor a 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+            for (int i = 0; i < cantidad; i++) {
+                String imagePath = "src\\Images\\computer.png";
+                int baseW = 80, baseH = 80;
+                if (computerCurrentSize != null) {
+                    baseW = computerCurrentSize.width;
+                    baseH = computerCurrentSize.height;
+                }
+                int baseX = 100 + 20 * computerCount, baseY = 20 * computerCount;
+
+                ImageIcon originalIcon = new ImageIcon(imagePath);
+
+                JPanel clientPanel = new JPanel();
+                clientPanel.setLayout(new BoxLayout(clientPanel, BoxLayout.Y_AXIS));
+                clientPanel.setOpaque(false);
+
+                JLabel clientLabel = new JLabel(new ImageIcon(originalIcon.getImage().getScaledInstance((int)(baseW * zoomFactor), (int)(baseH * zoomFactor), Image.SCALE_SMOOTH)));
+                clientLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+
+                JLabel nameLabel = new JLabel("PC " + computerCount);
+                nameLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+                nameLabel.setForeground(Color.BLACK);
+                float baseFontSize = 10f;
+                nameLabel.setFont(nameLabel.getFont().deriveFont(baseFontSize * (float)zoomFactor));
+
+                clientPanel.add(clientLabel);
+                clientPanel.add(nameLabel);
+
+                int textWidth = nameLabel.getPreferredSize().width;
+                int panelWidth = Math.max((int)(baseW * zoomFactor), textWidth + 10);
+                clientPanel.setBounds((int)(baseX * zoomFactor), (int)(baseY * zoomFactor), panelWidth, (int)(baseH * zoomFactor) + 20);
+
+                clientPanel.putClientProperty("imagePath", imagePath);
+                clientPanel.putClientProperty("baseW", baseW);
+                clientPanel.putClientProperty("baseH", baseH);
+                clientPanel.putClientProperty("baseX", baseX);
+                clientPanel.putClientProperty("baseY", baseY);
+
+                clientPanel.addMouseListener(new MouseAdapter() {
+                    Point offset;
+                    public void mousePressed(MouseEvent evt) {
+                        offset = evt.getPoint();
+                        centralPanel.revalidate();
+                        centralPanel.repaint();
+                        if (SwingUtilities.isRightMouseButton(evt)) {
+                            JPopupMenu menu = new JPopupMenu();
+                            JMenuItem eliminar = new JMenuItem("Eliminar");
+                            JMenuItem conexion = new JMenuItem("Crear Conexión");
+                            JMenuItem Econexion = new JMenuItem("Eliminar Conexión");
+
+                            JMenu modificarDatos = new JMenu("Modificar Datos");
+                            JMenuItem cambiarNombre = new JMenuItem("Cambiar nombre");
+                            JMenuItem cambiarLatencia = new JMenuItem("Cambiar latencia");
+
+                            cambiarNombre.addActionListener(ae -> {
+                                String nuevoNombre = JOptionPane.showInputDialog(null, "Nuevo nombre:", "Cambiar nombre", JOptionPane.QUESTION_MESSAGE);
+                                if (nuevoNombre != null && !nuevoNombre.trim().isEmpty()) {
+                                    int labelCount = 0;
+                                    JLabel nameLabelRef = null;
+                                    for (Component c : clientPanel.getComponents()) {
+                                        if (c instanceof JLabel label) {
+                                            labelCount++;
+                                            if (labelCount == 2) {
+                                                label.setText(nuevoNombre);
+                                                nameLabelRef = label;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (nameLabelRef != null) {
+                                        int textWidth2 = nameLabelRef.getPreferredSize().width;
+                                        int panelWidth2 = Math.max(clientPanel.getWidth(), textWidth2 + 10);
+                                        clientPanel.setSize(panelWidth2, clientPanel.getHeight());
+                                        clientPanel.setPreferredSize(new Dimension(panelWidth2, clientPanel.getHeight()));
+                                    }
+                                    centralPanel.revalidate();
+                                    centralPanel.repaint();
+                                }
+                            });
+
+                            cambiarLatencia.addActionListener(ae -> {
+                                String nuevaLatencia = JOptionPane.showInputDialog(null, "Nueva latencia (ms):", "Cambiar latencia", JOptionPane.QUESTION_MESSAGE);
+                                if (nuevaLatencia != null && !nuevaLatencia.trim().isEmpty()) {
+                                    try {
+                                        int lat = Integer.parseInt(nuevaLatencia);
+                                        clientPanel.putClientProperty("latencia", lat);
+                                        JOptionPane.showMessageDialog(null, "Latencia cambiada a " + lat + " ms");
+                                    } catch (NumberFormatException ex) {
+                                        JOptionPane.showMessageDialog(null, "Valor no válido.", "Error", JOptionPane.ERROR_MESSAGE);
+                                    }
+                                }
+                            });
+
+                            modificarDatos.add(cambiarNombre);
+                            modificarDatos.add(cambiarLatencia);
+
+                            Econexion.addActionListener(ae -> {
+                                List<JPanel[]> conexionesDelPanel = new ArrayList<>();
+                                for (JPanel[] par : conexiones) {
+                                    if (par[0] == clientPanel || par[1] == clientPanel) {
+                                        conexionesDelPanel.add(par);
+                                    }
+                                }
+                                if (conexionesDelPanel.isEmpty()) {
+                                    JOptionPane.showMessageDialog(null, "No hay conexiones para eliminar.", "Sin conexiones", JOptionPane.INFORMATION_MESSAGE);
+                                    return;
+                                }
+                                String[] opciones = new String[conexionesDelPanel.size()];
+                                for (int i = 0; i < conexionesDelPanel.size(); i++) {
+                                    JPanel otro = (conexionesDelPanel.get(i)[0] == clientPanel) ? conexionesDelPanel.get(i)[1] : conexionesDelPanel.get(i)[0];
+                                    String nombre = "";
+                                    for (Component c : otro.getComponents()) {
+                                        if (c instanceof JLabel label && label.getText() != null && !label.getText().isEmpty()) {
+                                            nombre = label.getText();
+                                            break;
+                                        }
+                                    }
+                                    opciones[i] = "Conectado a: " + nombre;
+                                }
+                                String seleccion = (String) JOptionPane.showInputDialog(
+                                    null,
+                                    "Seleccione la conexión a eliminar:",
+                                    "Eliminar Conexión",
+                                    JOptionPane.QUESTION_MESSAGE,
+                                    null,
+                                    opciones,
+                                    opciones[0]
+                                );
+                                if (seleccion != null) {
+                                    for (int i = 0; i < opciones.length; i++) {
+                                        if (opciones[i].equals(seleccion)) {
+                                            conexiones.remove(conexionesDelPanel.get(i));
+                                            centralPanel.repaint();
+                                            break;
+                                        }
+                                    }
+                                }
+                            });
+                            eliminar.addActionListener(ae -> {
+                                conexiones.removeIf(par -> par[0] == clientPanel || par[1] == clientPanel);
+                                centralPanel.remove(clientPanel);
+                                centralPanel.revalidate();
+                                centralPanel.repaint();
+                            });
+                            conexion.addActionListener(ae -> {
+                                firstSelectedPanel = clientPanel;
+                            });
+                            menu.add(eliminar);
+                            menu.add(conexion);
+                            menu.add(Econexion);
+                            menu.add(modificarDatos);
+                            menu.show(clientPanel, evt.getX(), evt.getY());
+                        } else if (firstSelectedPanel != null && firstSelectedPanel != clientPanel) {
+                            conexiones.add(new JPanel[]{firstSelectedPanel, clientPanel});
+                            firstSelectedPanel = null;
+                            centralPanel.repaint();
+                        }
+                    }
+                    public void mouseReleased(MouseEvent evt) {
+                        int logicX = (int)(clientPanel.getX() / zoomFactor);
+                        int logicY = (int)(clientPanel.getY() / zoomFactor);
+                        clientPanel.putClientProperty("baseX", logicX);
+                        clientPanel.putClientProperty("baseY", logicY);
+                        centralPanel.revalidate();
+                        centralPanel.repaint();
+                    }
+                });
+                clientPanel.addMouseMotionListener(new MouseMotionAdapter() {
+                    public void mouseDragged(MouseEvent evt) {
+                        int x = clientPanel.getX() + evt.getX() - clientPanel.getWidth() / 2;
+                        int y = clientPanel.getY() + evt.getY() - clientPanel.getHeight() / 2;
+                        clientPanel.setLocation(x, y);
+                        centralPanel.revalidate();
+                        centralPanel.repaint();
+                    }
+                });
+
+                centralPanel.add(clientPanel);
+                centralPanel.revalidate();
+                centralPanel.repaint();
+
+                if (computerCurrentSize == null) {
+                    computerCurrentSize = new Dimension(baseW, baseH);
+                }
+                computerCount++;
+            }
+        });
+
+        panel.add(routerButton);
+        panel.add(clientButton);
+        panel.add(serverButton);
+
+        JPanel panelNorte = new JPanel();
+        panelNorte.setLayout(new BorderLayout());
+        panelNorte.setBackground(new Color(245, 249, 255));
+        panelNorte.add(label, BorderLayout.WEST);
+
+        labelCaja.setHorizontalAlignment(SwingConstants.CENTER);
+        panelNorte.add(labelCaja, BorderLayout.CENTER);
+
+        panelTotal.add(panelNorte, BorderLayout.NORTH);
+        panelTotal.add(panel, BorderLayout.WEST);     
+        panelTotal.add(panelCentro, BorderLayout.CENTER); 
+
+        return panelTotal;
+    }
+}
+
