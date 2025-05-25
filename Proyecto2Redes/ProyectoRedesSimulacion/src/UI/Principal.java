@@ -11,6 +11,11 @@ public class Principal extends JFrame {
     private Point lastPoint;
     private double zoomFactor = 1.0;
     private List<JPanel[]> conexiones = new ArrayList<>();
+    private final NetworkSimulator simulator;
+
+    public Principal() {
+        this.simulator = new NetworkSimulator();
+    }
 
     public void start() {
         setTitle("Simulador de Redes de Computadores");
