@@ -66,53 +66,16 @@ public class PanelBulidThings {
             if (conexiones == null || conexiones.isEmpty()) {
                 JOptionPane.showMessageDialog(null, "Debe existir al menos una conexión para iniciar la entrega de paquetes.", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
-                Set<JPanel> procesados = new HashSet<>();
                 Map<JPanel, Integer> paquetesPorPanel = new HashMap<>();
-                for (JPanel[] par : conexiones) {
-                    for (int i = 0; i < 2; i++) {
-                        JPanel panelComp = par[i];
-                        if (procesados.contains(panelComp)) continue; 
-                        procesados.add(panelComp);
 
-                        String nombre = "Componente";
-                        boolean esServidor = false;
-                        for (Component c : panelComp.getComponents()) {
-                            if (c instanceof JLabel) {
-                                JLabel labell = (JLabel) c;
-                                if (labell.getText() != null && !labell.getText().isEmpty()) {
-                                    nombre = labell.getText();
-                                    if (nombre.toLowerCase().contains("servidor")) {
-                                        esServidor = true;
-                                    }
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (!esServidor) {
-                            Integer cantidad = null;
-                            while (cantidad == null) {
-                                String input = JOptionPane.showInputDialog(null, "¿Cuántos paquetes desea entregar a " + nombre + "?", "Entrega de paquetes", JOptionPane.QUESTION_MESSAGE);
-                                if (input == null) break; 
-                                try {
-                                    int val = Integer.parseInt(input);
-                                    if (val < 1) throw new NumberFormatException();
-                                    cantidad = val;
-                                    paquetesPorPanel.put(panelComp, cantidad);
-                                    JOptionPane.showMessageDialog(null, "Se entregarán " + cantidad + " paquetes a " + nombre + ".", "Entrega", JOptionPane.INFORMATION_MESSAGE);
-                                } catch (NumberFormatException ex) {
-                                    JOptionPane.showMessageDialog(null, "Ingrese un número entero mayor a 0.", "Error", JOptionPane.ERROR_MESSAGE);
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // --- ANIMACIÓN DE PAQUETES DESDE SERVIDOR ---
-                Image cajaImg = new ImageIcon("src\\Images\\caja.png").getImage();
+                // --- NUEVO BLOQUE: Selección múltiple para destinos directos (sin router) ---
+                List<JPanel> destinosDirectos = new ArrayList<>();
+                List<String> nombresDestinos = new ArrayList<>();
 
                 for (JPanel[] par : conexiones) {
                     JPanel servidor = null, destino = null;
+                    boolean routerIntermedio = false;
+
                     for (int i = 0; i < 2; i++) {
                         String nombre = "";
                         for (Component c : par[i].getComponents()) {
@@ -126,11 +89,190 @@ public class PanelBulidThings {
                         }
                         if (nombre.contains("servidor")) {
                             servidor = par[i];
-                            destino = par[1 - i];
+                            JPanel posibleRouter = par[1 - i];
+                            for (Component c : posibleRouter.getComponents()) {
+                                if (c instanceof JLabel) {
+                                    JLabel labell = (JLabel) c;
+                                    if (labell.getText() != null && labell.getText().toLowerCase().contains("router")) {
+                                        routerIntermedio = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!routerIntermedio) {
+                                destino = par[1 - i];
+                            }
                             break;
                         }
                     }
-                    if (servidor != null && destino != null && paquetesPorPanel.containsKey(destino)) {
+
+                    if (servidor != null && !routerIntermedio && destino != null && !destinosDirectos.contains(destino)) {
+                        String nombreDestino = "";
+                        for (Component c : destino.getComponents()) {
+                            if (c instanceof JLabel) {
+                                JLabel labell = (JLabel) c;
+                                if (labell.getText() != null && !labell.getText().isEmpty()) {
+                                    nombreDestino = labell.getText();
+                                    break;
+                                }
+                            }
+                        }
+                        destinosDirectos.add(destino);
+                        nombresDestinos.add(nombreDestino);
+                    }
+                }
+
+                if (!destinosDirectos.isEmpty()) {
+                    String[] opciones = nombresDestinos.toArray(new String[0]);
+                    JList<String> list = new JList<>(opciones);
+                    list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+                    int result = JOptionPane.showConfirmDialog(null, new JScrollPane(list), "Seleccione los destinos directos", JOptionPane.OK_CANCEL_OPTION);
+                    if (result == JOptionPane.OK_OPTION) {
+                        int[] seleccionados = list.getSelectedIndices();
+                        if (seleccionados.length > 0) {
+                            int cantidad = 1;
+                            boolean valido = false;
+                            while (!valido) {
+                                String input = JOptionPane.showInputDialog(null, "¿Cuántos paquetes desea entregar a los destinos seleccionados?", "Entrega de paquetes", JOptionPane.QUESTION_MESSAGE);
+                                if (input == null) break;
+                                try {
+                                    cantidad = Integer.parseInt(input);
+                                    if (cantidad < 1) throw new NumberFormatException();
+                                    valido = true;
+                                } catch (NumberFormatException ex) {
+                                    JOptionPane.showMessageDialog(null, "Ingrese un número entero mayor a 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                                }
+                            }
+                            if (valido) {
+                                for (int idx : seleccionados) {
+                                    paquetesPorPanel.put(destinosDirectos.get(idx), cantidad);
+                                }
+                            }
+                        }
+                    }
+                }
+                // --- FIN NUEVO BLOQUE ---
+
+                // --- ANIMACIÓN DE PAQUETES DESDE SERVIDOR ---
+                Image cajaImg = new ImageIcon("src\\Images\\caja.png").getImage();
+
+                for (JPanel[] par : conexiones) {
+                    JPanel servidor = null, destino = null;
+                    boolean routerIntermedio = false;
+                    JPanel routerPanel = null;
+
+                    for (int i = 0; i < 2; i++) {
+                        String nombre = "";
+                        for (Component c : par[i].getComponents()) {
+                            if (c instanceof JLabel) {
+                                JLabel labell = (JLabel) c;
+                                if (labell.getText() != null) {
+                                    nombre = labell.getText().toLowerCase();
+                                    break;
+                                }
+                            }
+                        }
+                        if (nombre.contains("servidor")) {
+                            servidor = par[i];
+                            JPanel posibleRouter = par[1 - i];
+                            for (Component c : posibleRouter.getComponents()) {
+                                if (c instanceof JLabel) {
+                                    JLabel labell = (JLabel) c;
+                                    if (labell.getText() != null && labell.getText().toLowerCase().contains("router")) {
+                                        routerIntermedio = true;
+                                        routerPanel = posibleRouter;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (!routerIntermedio) {
+                                destino = par[1 - i];
+                            }
+                            break;
+                        }
+                    }
+
+                    if (servidor != null && routerIntermedio && routerPanel != null) {
+                        List<JPanel> pcsConectados = new ArrayList<>();
+                        for (JPanel[] par2 : conexiones) {
+                            if (par2[0] == routerPanel || par2[1] == routerPanel) {
+                                JPanel otro = (par2[0] == routerPanel) ? par2[1] : par2[0];
+                                for (Component c : otro.getComponents()) {
+                                    if (c instanceof JLabel) {
+                                        JLabel labell = (JLabel) c;
+                                        if (labell.getText() != null && labell.getText().toLowerCase().contains("pc")) {
+                                            pcsConectados.add(otro);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (!pcsConectados.isEmpty()) {
+                            String[] opciones = new String[pcsConectados.size()];
+                            for (int i = 0; i < pcsConectados.size(); i++) {
+                                String nombre = "";
+                                for (Component c : pcsConectados.get(i).getComponents()) {
+                                    if (c instanceof JLabel) {
+                                        JLabel labele = (JLabel) c;
+                                        if (labele.getText() != null && !labele.getText().isEmpty()) {
+                                            nombre = labele.getText();
+                                            break;
+                                        }
+                                    }
+                                }
+                                opciones[i] = nombre;
+                            }
+                            JList<String> list = new JList<>(opciones);
+                            list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+                            int result = JOptionPane.showConfirmDialog(null, new JScrollPane(list), "Seleccione los PCs destino", JOptionPane.OK_CANCEL_OPTION);
+                            if (result == JOptionPane.OK_OPTION) {
+                                int[] seleccionados = list.getSelectedIndices();
+                                if (seleccionados.length > 0) {
+                                    int cantidad = 1;
+                                    boolean valido = false;
+                                    while (!valido) {
+                                        String input = JOptionPane.showInputDialog(null, "¿Cuántos paquetes desea entregar a los PCs seleccionados?", "Entrega de paquetes", JOptionPane.QUESTION_MESSAGE);
+                                        if (input == null) break;
+                                        try {
+                                            cantidad = Integer.parseInt(input);
+                                            if (cantidad < 1) throw new NumberFormatException();
+                                            valido = true;
+                                        } catch (NumberFormatException ex) {
+                                            JOptionPane.showMessageDialog(null, "Ingrese un número entero mayor a 0.", "Error", JOptionPane.ERROR_MESSAGE);
+                                        }
+                                    }
+                                    if (valido) {
+                                        for (int idx : seleccionados) {
+                                            JPanel pcDestino = pcsConectados.get(idx);
+
+                                            Point p1 = servidor.getLocation();
+                                            Point p2 = pcDestino.getLocation();
+                                            int startX = p1.x + servidor.getWidth() / 2;
+                                            int startY = p1.y + servidor.getHeight() / 2;
+                                            int endX = p2.x + pcDestino.getWidth() / 2;
+                                            int endY = p2.y + pcDestino.getHeight() / 2;
+
+                                            final int[] enviados = {0};
+                                            final int cantidadFinal = cantidad;
+                                            Timer timer = new Timer(150, null);
+                                            timer.addActionListener(ev -> {
+                                                if (enviados[0] < cantidadFinal) {
+                                                    PaqueteAnimado paquete = new PaqueteAnimado(startX, startY, endX, endY, centralPanel, cajaImg);
+                                                    centralPanel.add(paquete, 0);
+                                                    centralPanel.setComponentZOrder(paquete, 0);
+                                                    centralPanel.repaint();
+                                                    enviados[0]++;
+                                                } else {
+                                                    timer.stop();
+                                                }
+                                            });
+                                            timer.start();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } else if (servidor != null && destino != null && paquetesPorPanel.containsKey(destino)) {
                         int cantidad = paquetesPorPanel.get(destino);
                         Point p1 = servidor.getLocation();
                         Point p2 = destino.getLocation();

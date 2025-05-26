@@ -9,8 +9,7 @@ public class NetworkPanel extends JPanel {
 
     public NetworkPanel() {
         setLayout(null);
-
-        // Ejemplo: agregar un router, cliente y servidor
+        
         NetworkComponent router = new RouterComponent("Router 1", 100, 100);
         NetworkComponent client = new ClientComponent("Cliente 1", 300, 200);
         NetworkComponent server = new ServerComponent("Servidor 1", 500, 400);
