@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
 import javax.swing.*;
 
 public class PanelBulidThings {
@@ -68,7 +66,7 @@ public class PanelBulidThings {
             } else {
                 Map<JPanel, Integer> paquetesPorPanel = new HashMap<>();
 
-                // --- NUEVO BLOQUE: Selección múltiple para destinos directos (sin router) ---
+                // --- Selección múltiple para destinos directos (sin router) ---
                 List<JPanel> destinosDirectos = new ArrayList<>();
                 List<String> nombresDestinos = new ArrayList<>();
 
@@ -151,7 +149,6 @@ public class PanelBulidThings {
                         }
                     }
                 }
-                // --- FIN NUEVO BLOQUE ---
 
                 // --- ANIMACIÓN DE PAQUETES DESDE SERVIDOR ---
                 Image cajaImg = new ImageIcon("src\\Images\\caja.png").getImage();
@@ -193,6 +190,7 @@ public class PanelBulidThings {
                     }
 
                     if (servidor != null && routerIntermedio && routerPanel != null) {
+                        // --- NUEVA LÓGICA: Paquetes pasan primero al router y luego se multiplican ---
                         List<JPanel> pcsConectados = new ArrayList<>();
                         for (JPanel[] par2 : conexiones) {
                             if (par2[0] == routerPanel || par2[1] == routerPanel) {
@@ -242,32 +240,53 @@ public class PanelBulidThings {
                                         }
                                     }
                                     if (valido) {
-                                        for (int idx : seleccionados) {
-                                            JPanel pcDestino = pcsConectados.get(idx);
+                                        // 1. Animar paquetes del servidor al router (cantidad veces)
+                                        Point p1 = servidor.getLocation();
+                                        Point pRouter = routerPanel.getLocation();
+                                        int startX = p1.x + servidor.getWidth() / 2;
+                                        int startY = p1.y + servidor.getHeight() / 2;
+                                        int endX = pRouter.x + routerPanel.getWidth() / 2;
+                                        int endY = pRouter.y + routerPanel.getHeight() / 2;
 
-                                            Point p1 = servidor.getLocation();
-                                            Point p2 = pcDestino.getLocation();
-                                            int startX = p1.x + servidor.getWidth() / 2;
-                                            int startY = p1.y + servidor.getHeight() / 2;
-                                            int endX = p2.x + pcDestino.getWidth() / 2;
-                                            int endY = p2.y + pcDestino.getHeight() / 2;
+                                        final int cantidadFinal = cantidad; // <--- ESTA ES LA CLAVE
 
-                                            final int[] enviados = {0};
-                                            final int cantidadFinal = cantidad;
-                                            Timer timer = new Timer(150, null);
-                                            timer.addActionListener(ev -> {
-                                                if (enviados[0] < cantidadFinal) {
-                                                    PaqueteAnimado paquete = new PaqueteAnimado(startX, startY, endX, endY, centralPanel, cajaImg);
-                                                    centralPanel.add(paquete, 0);
-                                                    centralPanel.setComponentZOrder(paquete, 0);
-                                                    centralPanel.repaint();
-                                                    enviados[0]++;
-                                                } else {
-                                                    timer.stop();
+                                        final int[] enviadosAlRouter = {0};
+                                        Timer timerAlRouter = new Timer(200, null);
+                                        timerAlRouter.addActionListener(ev -> {
+                                            if (enviadosAlRouter[0] < cantidadFinal) {
+                                                PaqueteAnimado paquete = new PaqueteAnimado(startX, startY, endX, endY, centralPanel, cajaImg);
+                                                centralPanel.add(paquete, 0);
+                                                centralPanel.setComponentZOrder(paquete, 0);
+                                                centralPanel.repaint();
+                                                enviadosAlRouter[0]++;
+                                            } else {
+                                                ((Timer)ev.getSource()).stop();
+
+                                                // 2. Por cada PC seleccionado, animar cantidad paquetes del router al PC
+                                                for (int idx : seleccionados) {
+                                                    JPanel pcDestino = pcsConectados.get(idx);
+                                                    Point p2 = pcDestino.getLocation();
+                                                    int endPcX = p2.x + pcDestino.getWidth() / 2;
+                                                    int endPcY = p2.y + pcDestino.getHeight() / 2;
+
+                                                    final int[] enviados = {0};
+                                                    Timer timerAlPc = new Timer(200, null);
+                                                    timerAlPc.addActionListener(ev2 -> {
+                                                        if (enviados[0] < cantidadFinal) {
+                                                            PaqueteAnimado paquete = new PaqueteAnimado(endX, endY, endPcX, endPcY, centralPanel, cajaImg);
+                                                            centralPanel.add(paquete, 0);
+                                                            centralPanel.setComponentZOrder(paquete, 0);
+                                                            centralPanel.repaint();
+                                                            enviados[0]++;
+                                                        } else {
+                                                            ((Timer)ev2.getSource()).stop();
+                                                        }
+                                                    });
+                                                    timerAlPc.start();
                                                 }
-                                            });
-                                            timer.start();
-                                        }
+                                            }
+                                        });
+                                        timerAlRouter.start();
                                     }
                                 }
                             }
