@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 import javax.swing.*;
 
 public class PanelBulidThings {
@@ -25,6 +28,29 @@ public class PanelBulidThings {
         this.centralPanel = centralPanel;
         this.conexiones = conexiones;
         this.centralPanel.setLayout(null);
+    }
+
+    // Método para mostrar el resumen al finalizar el envío
+    private void mostrarResumenPaquetes(int enviados, int recibidos, int perdidos, String tiempoEnvio, String tiempoRecepcion, String latencia, String tamano, String ruta) {
+        JFrame resumenFrame = new JFrame("Resumen de Envío de Paquetes");
+        resumenFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        resumenFrame.setSize(400, 350);
+        resumenFrame.setLocationRelativeTo(null);
+
+        JTextArea area = new JTextArea();
+        area.setEditable(false);
+        area.setFont(new Font("Arial", Font.PLAIN, 14));
+        area.setText(
+            "Número de paquetes enviados: " + enviados + "\n" +
+            "Número de paquetes recibidos: " + recibidos + "\n" +
+            "Número de paquetes perdidos: " + perdidos + "\n" +
+            "Tiempos de envío y recepción: " + tiempoEnvio + " / " + tiempoRecepcion + "\n" +
+            "Latencia: " + latencia + "\n" +
+            "Tamaño de los paquetes: " + tamano + "\n" +
+            "Ruta seguida por el paquete: " + ruta
+        );
+        resumenFrame.add(new JScrollPane(area));
+        resumenFrame.setVisible(true);
     }
 
     public JPanel build() {
@@ -142,15 +168,95 @@ public class PanelBulidThings {
                                 }
                             }
                             if (valido) {
+                                final int cantidadFinal = cantidad;
+                                final int totalEnvios = cantidadFinal * seleccionados.length;
+                                final int[] enviados = {0};
+                                Random rand = new Random();
+                                final int x = 1; // o el valor mínimo que desees
+                                final int paquetesPerdidos = (totalEnvios >= x) ? rand.nextInt(totalEnvios - x + 1) + x : 0;
+
+                                // Genera los índices de los paquetes que se perderán
+                                final Set<Integer> perdidosSet = new HashSet<>();
+                                while (perdidosSet.size() < paquetesPerdidos) {
+                                    perdidosSet.add(rand.nextInt(totalEnvios));
+                                }
+
                                 for (int idx : seleccionados) {
-                                    paquetesPorPanel.put(destinosDirectos.get(idx), cantidad);
+                                    paquetesPorPanel.put(destinosDirectos.get(idx), cantidadFinal);
+                                }
+                                // --- ANIMACIÓN DE PAQUETES DESDE SERVIDOR (directo) ---
+                                for (int idx : seleccionados) {
+                                    JPanel destino = destinosDirectos.get(idx);
+                                    Point p1 = null, p2 = null;
+                                    JPanel servidorPanel = null;
+                                    for (JPanel[] par : conexiones) {
+                                        if ((par[0] == destino || par[1] == destino)) {
+                                            for (int i = 0; i < 2; i++) {
+                                                String nombre = "";
+                                                for (Component c : par[i].getComponents()) {
+                                                    if (c instanceof JLabel) {
+                                                        JLabel labell = (JLabel) c;
+                                                        if (labell.getText() != null) {
+                                                            nombre = labell.getText().toLowerCase();
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                                if (nombre.contains("servidor")) {
+                                                    servidorPanel = par[i];
+                                                    break;
+                                                }
+                                            }
+                                            if (servidorPanel != null) {
+                                                p1 = servidorPanel.getLocation();
+                                                p2 = destino.getLocation();
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    int startX = p1.x + servidorPanel.getWidth() / 2;
+                                    int startY = p1.y + servidorPanel.getHeight() / 2;
+                                    int endX = p2.x + destino.getWidth() / 2;
+                                    int endY = p2.y + destino.getHeight() / 2;
+
+                                    Timer timer = new Timer(150, null);
+                                    final int[] enviadosPorDestino = {0};
+                                    timer.addActionListener(ev -> {
+                                        int globalIndex = enviados[0];
+                                        if (enviadosPorDestino[0] < cantidadFinal) {
+                                            if (!perdidosSet.contains(globalIndex)) {
+                                                PaqueteAnimado paquete = new PaqueteAnimado(startX, startY, endX, endY, centralPanel, new ImageIcon("src\\Images\\caja.png").getImage());
+                                                centralPanel.add(paquete, 0);
+                                                centralPanel.setComponentZOrder(paquete, 0);
+                                                centralPanel.repaint();
+                                            }
+                                            enviadosPorDestino[0]++;
+                                            enviados[0]++;
+                                        } else {
+                                            ((Timer)ev.getSource()).stop();
+                                            // Mostrar resumen cuando todos los envíos hayan terminado
+                                            if (enviados[0] == totalEnvios) {
+                                                mostrarResumenPaquetes(
+                                                    totalEnvios, // enviados
+                                                    totalEnvios - paquetesPerdidos, // recibidos
+                                                    paquetesPerdidos, // perdidos
+                                                    "10 ms",     // tiempo de envío (simulado)
+                                                    "15 ms",     // tiempo de recepción (simulado)
+                                                    "5 ms",      // latencia (simulado)
+                                                    "512 bytes", // tamaño (simulado)
+                                                    "Servidor -> PC"
+                                                );
+                                            }
+                                        }
+                                    });
+                                    timer.start();
                                 }
                             }
                         }
                     }
                 }
 
-                // --- ANIMACIÓN DE PAQUETES DESDE SERVIDOR ---
+                // --- ANIMACIÓN DE PAQUETES DESDE SERVIDOR (con router) ---
                 Image cajaImg = new ImageIcon("src\\Images\\caja.png").getImage();
 
                 for (JPanel[] par : conexiones) {
@@ -190,7 +296,6 @@ public class PanelBulidThings {
                     }
 
                     if (servidor != null && routerIntermedio && routerPanel != null) {
-                        // --- NUEVA LÓGICA: Paquetes pasan primero al router y luego se multiplican ---
                         List<JPanel> pcsConectados = new ArrayList<>();
                         for (JPanel[] par2 : conexiones) {
                             if (par2[0] == routerPanel || par2[1] == routerPanel) {
@@ -240,7 +345,6 @@ public class PanelBulidThings {
                                         }
                                     }
                                     if (valido) {
-                                        // 1. Animar paquetes del servidor al router (cantidad veces)
                                         Point p1 = servidor.getLocation();
                                         Point pRouter = routerPanel.getLocation();
                                         int startX = p1.x + servidor.getWidth() / 2;
@@ -248,7 +352,19 @@ public class PanelBulidThings {
                                         int endX = pRouter.x + routerPanel.getWidth() / 2;
                                         int endY = pRouter.y + routerPanel.getHeight() / 2;
 
-                                        final int cantidadFinal = cantidad; // <--- ESTA ES LA CLAVE
+                                        final int cantidadFinal = cantidad;
+                                        final int totalEnvios = cantidadFinal * seleccionados.length;
+                                        final int[] enviadosTotales = {0};
+                                        Random rand = new Random();
+                                        final int paquetesPerdidos = rand.nextInt(totalEnvios + 1);
+
+                                        // Genera los índices de los paquetes que se perderán
+                                        final Set<Integer> perdidosSet = new HashSet<>();
+                                        while (perdidosSet.size() < paquetesPerdidos) {
+                                            perdidosSet.add(rand.nextInt(totalEnvios));
+                                        }
+
+                                        final int[] globalIndex = {0}; // Para llevar el índice global de cada paquete
 
                                         final int[] enviadosAlRouter = {0};
                                         Timer timerAlRouter = new Timer(200, null);
@@ -262,7 +378,6 @@ public class PanelBulidThings {
                                             } else {
                                                 ((Timer)ev.getSource()).stop();
 
-                                                // 2. Por cada PC seleccionado, animar cantidad paquetes del router al PC
                                                 for (int idx : seleccionados) {
                                                     JPanel pcDestino = pcsConectados.get(idx);
                                                     Point p2 = pcDestino.getLocation();
@@ -273,13 +388,31 @@ public class PanelBulidThings {
                                                     Timer timerAlPc = new Timer(200, null);
                                                     timerAlPc.addActionListener(ev2 -> {
                                                         if (enviados[0] < cantidadFinal) {
-                                                            PaqueteAnimado paquete = new PaqueteAnimado(endX, endY, endPcX, endPcY, centralPanel, cajaImg);
-                                                            centralPanel.add(paquete, 0);
-                                                            centralPanel.setComponentZOrder(paquete, 0);
-                                                            centralPanel.repaint();
+                                                            // Solo animar si este paquete no está perdido
+                                                            if (!perdidosSet.contains(globalIndex[0])) {
+                                                                PaqueteAnimado paquete = new PaqueteAnimado(endX, endY, endPcX, endPcY, centralPanel, cajaImg);
+                                                                centralPanel.add(paquete, 0);
+                                                                centralPanel.setComponentZOrder(paquete, 0);
+                                                                centralPanel.repaint();
+                                                            }
                                                             enviados[0]++;
+                                                            enviadosTotales[0]++;
+                                                            globalIndex[0]++;
                                                         } else {
                                                             ((Timer)ev2.getSource()).stop();
+                                                            // Mostrar resumen cuando todos los envíos hayan terminado
+                                                            if (enviadosTotales[0] == totalEnvios) {
+                                                                mostrarResumenPaquetes(
+                                                                    totalEnvios, // enviados
+                                                                    totalEnvios - paquetesPerdidos, // recibidos
+                                                                    paquetesPerdidos, // perdidos
+                                                                    "10 ms",     // tiempo de envío (simulado)
+                                                                    "15 ms",     // tiempo de recepción (simulado)
+                                                                    "5 ms",      // latencia (simulado)
+                                                                    "512 bytes", // tamaño (simulado)
+                                                                    "Servidor -> Router -> PC"
+                                                                );
+                                                            }
                                                         }
                                                     });
                                                     timerAlPc.start();
