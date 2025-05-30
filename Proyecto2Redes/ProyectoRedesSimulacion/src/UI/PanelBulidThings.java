@@ -19,7 +19,6 @@ public class PanelBulidThings {
     private Dimension routerCurrentSize = null;
     private Dimension computerCurrentSize = null;
     private Dimension serverCurrentSize = null;
-
     private JPanel firstSelectedPanel = null;
     private double zoomFactor = 1.0;
 
@@ -236,14 +235,22 @@ public class PanelBulidThings {
                                             ((Timer)ev.getSource()).stop();
                                             // Mostrar resumen cuando todos los envíos hayan terminado
                                             if (enviados[0] == totalEnvios) {
+                                                long[] tiempoInicio = {0};
+                                                long[] tiempoFin = {0};
+                                                tiempoInicio[0] = System.currentTimeMillis();
+                                                tiempoFin[0] = System.currentTimeMillis();
+                                                long tiempoEnvio = tiempoFin[0] - tiempoInicio[0];
+                                                long tiempoRecepcion = tiempoEnvio;
+                                                String tiempoEnvioStr = tiempoEnvio + " ms";
+                                                String tiempoRecepcionStr = tiempoRecepcion + " ms";
                                                 mostrarResumenPaquetes(
-                                                    totalEnvios, // enviados
-                                                    totalEnvios - paquetesPerdidos, // recibidos
-                                                    paquetesPerdidos, // perdidos
-                                                    "10 ms",     // tiempo de envío (simulado)
-                                                    "15 ms",     // tiempo de recepción (simulado)
-                                                    "5 ms",      // latencia (simulado)
-                                                    "512 bytes", // tamaño (simulado)
+                                                    totalEnvios,
+                                                    totalEnvios - paquetesPerdidos,
+                                                    paquetesPerdidos,
+                                                    tiempoEnvioStr,
+                                                    tiempoRecepcionStr,
+                                                    "5 ms",
+                                                    "512 bytes",
                                                     "Servidor -> PC"
                                                 );
                                             }
@@ -365,6 +372,9 @@ public class PanelBulidThings {
                                         }
 
                                         final int[] globalIndex = {0}; // Para llevar el índice global de cada paquete
+                                        final long[] tiempoInicio = {0};
+                                        final long[] tiempoFin = {0};
+                                        tiempoInicio[0] = System.currentTimeMillis();
 
                                         final int[] enviadosAlRouter = {0};
                                         Timer timerAlRouter = new Timer(200, null);
@@ -377,7 +387,6 @@ public class PanelBulidThings {
                                                 enviadosAlRouter[0]++;
                                             } else {
                                                 ((Timer)ev.getSource()).stop();
-
                                                 for (int idx : seleccionados) {
                                                     JPanel pcDestino = pcsConectados.get(idx);
                                                     Point p2 = pcDestino.getLocation();
@@ -388,7 +397,6 @@ public class PanelBulidThings {
                                                     Timer timerAlPc = new Timer(200, null);
                                                     timerAlPc.addActionListener(ev2 -> {
                                                         if (enviados[0] < cantidadFinal) {
-                                                            // Solo animar si este paquete no está perdido
                                                             if (!perdidosSet.contains(globalIndex[0])) {
                                                                 PaqueteAnimado paquete = new PaqueteAnimado(endX, endY, endPcX, endPcY, centralPanel, cajaImg);
                                                                 centralPanel.add(paquete, 0);
@@ -400,16 +408,20 @@ public class PanelBulidThings {
                                                             globalIndex[0]++;
                                                         } else {
                                                             ((Timer)ev2.getSource()).stop();
-                                                            // Mostrar resumen cuando todos los envíos hayan terminado
                                                             if (enviadosTotales[0] == totalEnvios) {
+                                                                tiempoFin[0] = System.currentTimeMillis();
+                                                                long tiempoEnvio = tiempoFin[0] - tiempoInicio[0];
+                                                                long tiempoRecepcion = tiempoEnvio;
+                                                                String tiempoEnvioStr = tiempoEnvio + " ms";
+                                                                String tiempoRecepcionStr = tiempoRecepcion + " ms";
                                                                 mostrarResumenPaquetes(
-                                                                    totalEnvios, // enviados
-                                                                    totalEnvios - paquetesPerdidos, // recibidos
-                                                                    paquetesPerdidos, // perdidos
-                                                                    "10 ms",     // tiempo de envío (simulado)
-                                                                    "15 ms",     // tiempo de recepción (simulado)
-                                                                    "5 ms",      // latencia (simulado)
-                                                                    "512 bytes", // tamaño (simulado)
+                                                                    totalEnvios,
+                                                                    totalEnvios - paquetesPerdidos,
+                                                                    paquetesPerdidos,
+                                                                    tiempoEnvioStr,
+                                                                    tiempoRecepcionStr,
+                                                                    "5 ms",
+                                                                    "512 bytes",
                                                                     "Servidor -> Router -> PC"
                                                                 );
                                                             }
@@ -423,8 +435,7 @@ public class PanelBulidThings {
                                     }
                                 }
                             }
-                        }
-                    } else if (servidor != null && destino != null && paquetesPorPanel.containsKey(destino)) {
+                        } else if (servidor != null && destino != null && paquetesPorPanel.containsKey(destino)) {
                         int cantidad = paquetesPorPanel.get(destino);
                         Point p1 = servidor.getLocation();
                         Point p2 = destino.getLocation();
@@ -450,6 +461,7 @@ public class PanelBulidThings {
                     }
                 }
             }
+        }
         });
 
         panelCentro.add(labelCaja);
