@@ -76,7 +76,7 @@ public class PanelBulidThings {
         labelCaja.setHorizontalAlignment(JLabel.CENTER); 
         labelCaja.setAlignmentX(Component.CENTER_ALIGNMENT); 
 
-        String boxImagePath = "src\\Images\\caja.png"; 
+        String boxImagePath = "Proyecto2Redes\\ProyectoRedesSimulacion\\src\\Images\\caja.png"; 
         JButton boxButton = new JButton();
         boxButton.setIcon(new ImageIcon(new ImageIcon(boxImagePath).getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH)));
         boxButton.setToolTipText("Iniciar entrega de paquetes");
@@ -290,7 +290,7 @@ public class PanelBulidThings {
                 }
 
                 // --- Animación de paquetes desde servidor (con router) ---
-                Image cajaImg = new ImageIcon("src\\Images\\caja.png").getImage();
+                Image cajaImg = new ImageIcon("Proyecto2Redes\\ProyectoRedesSimulacion\\src\\Images\\caja.png").getImage();
 
                 for (JPanel[] par : conexiones) {
                     final JPanel[] servidorHolder = {null};
@@ -553,7 +553,7 @@ public class PanelBulidThings {
                 }
             }
             for (int i = 0; i < cantidad; i++) {
-                String imagePath = "src\\Images\\server.png";
+                String imagePath = "Proyecto2Redes\\ProyectoRedesSimulacion\\src\\Images\\server.png";
                 int baseW = 60, baseH = 60;
                 if (serverCurrentSize != null) {
                     baseW = serverCurrentSize.width;
@@ -562,6 +562,7 @@ public class PanelBulidThings {
                 int baseX = 20 * serverCount, baseY = 20 * serverCount;
 
                 ImageIcon originalIcon = new ImageIcon(imagePath);
+                System.out.println("Icon width: " + originalIcon.getIconWidth());
 
                 JPanel serverPanel = new JPanel();
                 serverPanel.setLayout(new BoxLayout(serverPanel, BoxLayout.Y_AXIS));
@@ -755,7 +756,7 @@ public class PanelBulidThings {
                 }
             }
             for (int i = 0; i < cantidad; i++) {
-                String imagePath = "src\\Images\\router.png";
+                String imagePath = "Proyecto2Redes\\ProyectoRedesSimulacion\\src\\Images\\router.png";
                 int baseW = 60, baseH = 60;
                 if (routerCurrentSize != null) {
                     baseW = routerCurrentSize.width;
@@ -957,7 +958,7 @@ public class PanelBulidThings {
                 }
             }
             for (int i = 0; i < cantidad; i++) {
-                String imagePath = "src\\Images\\computer.png";
+                String imagePath = "Proyecto2Redes\\ProyectoRedesSimulacion\\src\\Images\\computer.png";
                 int baseW = 80, baseH = 80;
                 if (computerCurrentSize != null) {
                     baseW = computerCurrentSize.width;

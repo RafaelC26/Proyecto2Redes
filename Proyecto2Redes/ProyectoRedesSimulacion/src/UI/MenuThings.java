@@ -7,7 +7,7 @@ public class MenuThings {
     public static JButton createRouterButton() {
         
 
-        String imagePath = "src\\Images\\router.png";
+        String imagePath = "Proyecto2Redes\\ProyectoRedesSimulacion\\src\\Images\\router.png";
         ImageIcon originalIcon = new ImageIcon(imagePath);
 
         Image scaledImage = originalIcon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
@@ -25,7 +25,7 @@ public class MenuThings {
     public static JButton createClientButton() {
         
 
-        String imagePath = "src\\Images\\computer.png";
+        String imagePath = "Proyecto2Redes\\ProyectoRedesSimulacion\\src\\Images\\computer.png";
         ImageIcon originalIcon = new ImageIcon(imagePath);
 
         Image scaledImage = originalIcon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
@@ -43,7 +43,7 @@ public class MenuThings {
     public static JButton createServerButton() {
         
 
-        String imagePath = "src\\Images\\server.png";
+        String imagePath = "Proyecto2Redes\\ProyectoRedesSimulacion\\src\\Images\\server.png";
         ImageIcon originalIcon = new ImageIcon(imagePath);
 
         Image scaledImage = originalIcon.getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH);
