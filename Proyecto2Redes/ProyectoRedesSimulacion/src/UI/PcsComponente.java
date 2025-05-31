@@ -1,12 +1,12 @@
 import javax.swing.*;
 import java.awt.*;
 
-public class ClientComponent implements NetworkComponent {
+public class PcsComponente implements AuxComponentes {
     private final JPanel panel;
     private final String name;
     private final int x, y;
 
-    public ClientComponent(String name, int x, int y) {
+    public PcsComponente(String name, int x, int y) {
         this.name = name;
         this.x = x;
         this.y = y;

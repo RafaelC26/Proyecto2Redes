@@ -2,10 +2,10 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ConnectionManager {
+public class Conexiones {
     private final List<Connection> connections = new ArrayList<>();
 
-    public void addConnection(NetworkComponent a, NetworkComponent b) {
+    public void addConnection(AuxComponentes a, AuxComponentes b) {
         connections.add(new Connection(a, b));
     }
 
@@ -21,8 +21,8 @@ public class ConnectionManager {
     }
 
     private static class Connection {
-        NetworkComponent a, b;
-        Connection(NetworkComponent a, NetworkComponent b) {
+        AuxComponentes a, b;
+        Connection(AuxComponentes a, AuxComponentes b) {
             this.a = a;
             this.b = b;
         }

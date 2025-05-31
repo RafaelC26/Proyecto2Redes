@@ -1,12 +1,12 @@
 import javax.swing.*;
 import java.awt.*;
 
-public class ServerComponent implements NetworkComponent {
+public class RouterComponente implements AuxComponentes {
     private final JPanel panel;
     private final String name;
     private final int x, y;
 
-    public ServerComponent(String name, int x, int y) {
+    public RouterComponente(String name, int x, int y) {
         this.name = name;
         this.x = x;
         this.y = y;
@@ -15,7 +15,7 @@ public class ServerComponent implements NetworkComponent {
         panel.setLayout(new BorderLayout());
         JLabel label = new JLabel(name, SwingConstants.CENTER);
         panel.add(label, BorderLayout.CENTER);
-        panel.setBorder(BorderFactory.createLineBorder(Color.RED, 2));
+        panel.setBorder(BorderFactory.createLineBorder(Color.BLUE, 2));
     }
 
     @Override
@@ -30,11 +30,11 @@ public class ServerComponent implements NetworkComponent {
 
     @Override
     public int getX() {
-        return x + 40;
+        return x + 40; // centro
     }
 
     @Override
     public int getY() {
-        return y + 40;
+        return y + 40; // centro
     }
 }

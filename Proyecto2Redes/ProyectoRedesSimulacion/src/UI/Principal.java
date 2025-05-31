@@ -11,11 +11,8 @@ public class Principal extends JFrame {
     private Point lastPoint;
     private double zoomFactor = 1.0;
     private List<JPanel[]> conexiones = new ArrayList<>();
-    private final NetworkSimulator simulator;
 
-    public Principal() {
-        this.simulator = new NetworkSimulator();
-    }
+   
 
     public void start() {
         setTitle("Simulador de Redes de Computadores");
@@ -53,7 +50,7 @@ public class Principal extends JFrame {
         scrollPaneCentral = new JScrollPane(panelCentral);
         scrollPaneCentral.setPreferredSize(new Dimension(900, 600)); 
 
-        JPanel toolbarPanel = new ToolbarBuilder(this, conexiones, panelCentral).build();
+        JPanel toolbarPanel = new BuildMenuSuperior(this, conexiones, panelCentral).build();
 
         SwingUtilities.invokeLater(() -> {
             int centerX = panelCentral.getPreferredSize().width / 2 - scrollPaneCentral.getViewport().getWidth() / 2;
@@ -125,7 +122,7 @@ public class Principal extends JFrame {
             }
         });
 
-        PanelBulidThings panelBulidThings = new PanelBulidThings(this, panelCentral, conexiones);
+        BuildPrincipal panelBulidThings = new BuildPrincipal(this, panelCentral, conexiones);
 
         mainPanel.add(toolbarPanel, BorderLayout.NORTH);
         mainPanel.add(scrollPaneCentral, BorderLayout.CENTER); 
