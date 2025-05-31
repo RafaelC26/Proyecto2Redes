@@ -21,6 +21,7 @@ public class BuildPrincipal {
     private Dimension serverCurrentSize = null;
     private JPanel firstSelectedPanel = null;
     private double zoomFactor = 1.0;
+    private ReportesEnvioPaquetes reportesEnvioPaquetes = new ReportesEnvioPaquetes();
 
     public BuildPrincipal(Principal principal, JPanel centralPanel, List<JPanel[]> conexiones) {
         this.principal = principal;
@@ -29,28 +30,7 @@ public class BuildPrincipal {
         this.centralPanel.setLayout(null);
     }
 
-    // Muestra el resumen al finalizar el envío
-    private void mostrarResumenPaquetes(int enviados, int recibidos, int perdidos, String tiempoEnvio, String tiempoRecepcion, String latencia, String tamano, String ruta) {
-        JFrame resumenFrame = new JFrame("Resumen de Envío de Paquetes");
-        resumenFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        resumenFrame.setSize(400, 350);
-        resumenFrame.setLocationRelativeTo(null);
-
-        JTextArea area = new JTextArea();
-        area.setEditable(false);
-        area.setFont(new Font("Arial", Font.PLAIN, 14));
-        area.setText(
-            "Número de paquetes enviados: " + enviados + "\n" +
-            "Número de paquetes recibidos: " + recibidos + "\n" +
-            "Número de paquetes perdidos: " + perdidos + "\n" +
-            "Tiempos de envío y recepción: " + tiempoEnvio + " / " + tiempoRecepcion + "\n" +
-            "Latencia: " + latencia + "\n" +
-            "Tamaño de los paquetes: " + tamano + "\n" +
-            "Ruta seguida por el paquete: " + ruta
-        );
-        resumenFrame.add(new JScrollPane(area));
-        resumenFrame.setVisible(true);
-    }
+    
 
     public JPanel build() {
         JPanel panelTotal = new JPanel(new BorderLayout());
@@ -269,7 +249,7 @@ public class BuildPrincipal {
                                                 }
                                                 String ruta = rutas.toString().trim();
 
-                                                mostrarResumenPaquetes(
+                                                reportesEnvioPaquetes.mostrarReportePaquetes(
                                                     totalEnvios,
                                                     paquetesRecibidos,
                                                     paquetesPerdidos,
@@ -480,7 +460,7 @@ public class BuildPrincipal {
                                                                 }
                                                                 String ruta = rutas.toString().trim();
 
-                                                                mostrarResumenPaquetes(
+                                                                reportesEnvioPaquetes.mostrarReportePaquetes(
                                                                     totalEnvios,
                                                                     paquetesRecibidos,
                                                                     paquetesPerdidos,
