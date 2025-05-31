@@ -6,7 +6,7 @@ import java.util.List;
 
 public class Principal extends JFrame {
 
-    private JPanel panelCentral;
+    private static JPanel panelCentral;
     private JScrollPane scrollPaneCentral;
     private Point lastPoint;
     private double zoomFactor = 1.0;
@@ -28,9 +28,7 @@ public class Principal extends JFrame {
         mainPanel.setBackground(new Color(245, 249, 255));
         setContentPane(mainPanel);
 
-        JPanel toolbarPanel = new ToolbarBuilder(this).build();
-
-        JPanel centralPanel = new JPanel(null) {
+        panelCentral = new JPanel(null) {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
@@ -51,18 +49,20 @@ public class Principal extends JFrame {
                 return new Point(x, y);
             }
         };
-        centralPanel.setPreferredSize(new Dimension(2000, 1200));
-        scrollPaneCentral = new JScrollPane(centralPanel);
+        panelCentral.setPreferredSize(new Dimension(2000, 1200));
+        scrollPaneCentral = new JScrollPane(panelCentral);
         scrollPaneCentral.setPreferredSize(new Dimension(900, 600)); 
 
+        JPanel toolbarPanel = new ToolbarBuilder(this, conexiones, panelCentral).build();
+
         SwingUtilities.invokeLater(() -> {
-            int centerX = centralPanel.getPreferredSize().width / 2 - scrollPaneCentral.getViewport().getWidth() / 2;
-            int centerY = centralPanel.getPreferredSize().height / 2 - scrollPaneCentral.getViewport().getHeight() / 2;
+            int centerX = panelCentral.getPreferredSize().width / 2 - scrollPaneCentral.getViewport().getWidth() / 2;
+            int centerY = panelCentral.getPreferredSize().height / 2 - scrollPaneCentral.getViewport().getHeight() / 2;
             scrollPaneCentral.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
             scrollPaneCentral.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER);
         });
 
-        centralPanel.addMouseWheelListener(new MouseWheelListener() {
+        panelCentral.addMouseWheelListener(new MouseWheelListener() {
             public void mouseWheelMoved(MouseWheelEvent e) {
                 if (e.getPreciseWheelRotation() < 0) {
                     zoomFactor *= 1.1; 
@@ -70,7 +70,7 @@ public class Principal extends JFrame {
                     zoomFactor /= 1.1; 
                 }
                 zoomFactor = Math.max(0.2, Math.min(zoomFactor, 5.0));
-                for (Component comp : centralPanel.getComponents()) {
+                for (Component comp : panelCentral.getComponents()) {
                     if (comp instanceof JPanel) {
                         JPanel panel = (JPanel) comp;
                         String imagePath = (String) panel.getClientProperty("imagePath");
@@ -88,12 +88,10 @@ public class Principal extends JFrame {
                             for (Component c : panel.getComponents()) {
                                 if (c instanceof JLabel label) {
                                     if (label.getIcon() != null) {
-                                        // Es la imagen
                                         ImageIcon originalIcon = new ImageIcon(imagePath);
                                         Image scaledImage = originalIcon.getImage().getScaledInstance(newW, newH, Image.SCALE_SMOOTH);
                                         label.setIcon(new ImageIcon(scaledImage));
                                     } else {
-                                        // Es el texto
                                         float baseFontSize = 10f; 
                                         label.setFont(label.getFont().deriveFont(baseFontSize * (float)zoomFactor));
                                     }
@@ -102,33 +100,32 @@ public class Principal extends JFrame {
                         }
                     }
                 }
-                centralPanel.revalidate();
-                centralPanel.repaint();
+                panelCentral.revalidate();
+                panelCentral.repaint();
             }
         });
 
-        centralPanel.addMouseListener(new MouseAdapter() {
+        panelCentral.addMouseListener(new MouseAdapter() {
             public void mousePressed(MouseEvent e) {
                 lastPoint = e.getPoint();
             }
         });
-        centralPanel.addMouseMotionListener(new MouseMotionAdapter() {
+        panelCentral.addMouseMotionListener(new MouseMotionAdapter() {
             public void mouseDragged(MouseEvent e) {
                 if (lastPoint == null) return;
                 Point current = e.getPoint();
                 int dx = current.x - lastPoint.x;
                 int dy = current.y - lastPoint.y;
-                for (Component comp : centralPanel.getComponents()) {
+                for (Component comp : panelCentral.getComponents()) {
                     Point loc = comp.getLocation();
                     comp.setLocation(loc.x + dx, loc.y + dy);
                 }
-                centralPanel.repaint();
+                panelCentral.repaint();
                 lastPoint = current;
             }
         });
 
-        // Pasa conexiones a PanelBulidThings
-        PanelBulidThings panelBulidThings = new PanelBulidThings(this, centralPanel, conexiones);
+        PanelBulidThings panelBulidThings = new PanelBulidThings(this, panelCentral, conexiones);
 
         mainPanel.add(toolbarPanel, BorderLayout.NORTH);
         mainPanel.add(scrollPaneCentral, BorderLayout.CENTER); 

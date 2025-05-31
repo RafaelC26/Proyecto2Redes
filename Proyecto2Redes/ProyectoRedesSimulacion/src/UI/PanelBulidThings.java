@@ -29,7 +29,7 @@ public class PanelBulidThings {
         this.centralPanel.setLayout(null);
     }
 
-    // Método para mostrar el resumen al finalizar el envío
+    // Muestra el resumen al finalizar el envío
     private void mostrarResumenPaquetes(int enviados, int recibidos, int perdidos, String tiempoEnvio, String tiempoRecepcion, String latencia, String tamano, String ruta) {
         JFrame resumenFrame = new JFrame("Resumen de Envío de Paquetes");
         resumenFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -167,27 +167,27 @@ public class PanelBulidThings {
                                 }
                             }
                             if (valido) {
+                                final long[] tiempoInicio = {System.currentTimeMillis()};
+                                final long[] tiempoFin = {0};
+                                final boolean[] resumenMostrado = {false};
                                 final int cantidadFinal = cantidad;
                                 final int totalEnvios = cantidadFinal * seleccionados.length;
                                 final int[] enviados = {0};
                                 Random rand = new Random();
-                                final int x = 1; // o el valor mínimo que desees
+                                final int x = 1;
                                 final int paquetesPerdidos = (totalEnvios >= x) ? rand.nextInt(totalEnvios - x + 1) + x : 0;
-
-                                // Genera los índices de los paquetes que se perderán
                                 final Set<Integer> perdidosSet = new HashSet<>();
                                 while (perdidosSet.size() < paquetesPerdidos) {
                                     perdidosSet.add(rand.nextInt(totalEnvios));
                                 }
-
                                 for (int idx : seleccionados) {
                                     paquetesPorPanel.put(destinosDirectos.get(idx), cantidadFinal);
                                 }
-                                // --- ANIMACIÓN DE PAQUETES DESDE SERVIDOR (directo) ---
+                                // --- Animación de paquetes desde servidor (directo) ---
                                 for (int idx : seleccionados) {
                                     JPanel destino = destinosDirectos.get(idx);
                                     Point p1 = null, p2 = null;
-                                    JPanel servidorPanel = null;
+                                    final JPanel[] servidorPanelHolder = {null};
                                     for (JPanel[] par : conexiones) {
                                         if ((par[0] == destino || par[1] == destino)) {
                                             for (int i = 0; i < 2; i++) {
@@ -202,19 +202,19 @@ public class PanelBulidThings {
                                                     }
                                                 }
                                                 if (nombre.contains("servidor")) {
-                                                    servidorPanel = par[i];
+                                                    servidorPanelHolder[0] = par[i];
                                                     break;
                                                 }
                                             }
-                                            if (servidorPanel != null) {
-                                                p1 = servidorPanel.getLocation();
+                                            if (servidorPanelHolder[0] != null) {
+                                                p1 = servidorPanelHolder[0].getLocation();
                                                 p2 = destino.getLocation();
                                                 break;
                                             }
                                         }
                                     }
-                                    int startX = p1.x + servidorPanel.getWidth() / 2;
-                                    int startY = p1.y + servidorPanel.getHeight() / 2;
+                                    int startX = p1.x + servidorPanelHolder[0].getWidth() / 2;
+                                    int startY = p1.y + servidorPanelHolder[0].getHeight() / 2;
                                     int endX = p2.x + destino.getWidth() / 2;
                                     int endY = p2.y + destino.getHeight() / 2;
 
@@ -234,24 +234,50 @@ public class PanelBulidThings {
                                         } else {
                                             ((Timer)ev.getSource()).stop();
                                             // Mostrar resumen cuando todos los envíos hayan terminado
-                                            if (enviados[0] == totalEnvios) {
-                                                long[] tiempoInicio = {0};
-                                                long[] tiempoFin = {0};
-                                                tiempoInicio[0] = System.currentTimeMillis();
+                                            if (enviados[0] == totalEnvios && !resumenMostrado[0]) {
+                                                resumenMostrado[0] = true;
                                                 tiempoFin[0] = System.currentTimeMillis();
                                                 long tiempoEnvio = tiempoFin[0] - tiempoInicio[0];
                                                 long tiempoRecepcion = tiempoEnvio;
                                                 String tiempoEnvioStr = tiempoEnvio + " ms";
                                                 String tiempoRecepcionStr = tiempoRecepcion + " ms";
+                                                int paquetesRecibidos = totalEnvios - paquetesPerdidos;
+                                                String latenciaStr = (paquetesRecibidos > 0) ? (tiempoEnvio / paquetesRecibidos) + " ms" : "0 ms";
+
+                                                // Construir rutas para cada PC seleccionada
+                                                String nombreServidor = "";
+                                                for (Component c : servidorPanelHolder[0].getComponents()) {
+                                                    if (c instanceof JLabel lbl && lbl.getText() != null && !lbl.getText().isEmpty()) {
+                                                        nombreServidor = lbl.getText();
+                                                        break;
+                                                    }
+                                                }
+                                                StringBuilder rutas = new StringBuilder();
+                                                for (int idxRuta : seleccionados) {
+                                                    String nombrePC = "";
+                                                    JPanel pcDestinoRuta = destinosDirectos.get(idxRuta);
+                                                    for (Component c : pcDestinoRuta.getComponents()) {
+                                                        if (c instanceof JLabel lbl && lbl.getText() != null && !lbl.getText().isEmpty()) {
+                                                            nombrePC = lbl.getText();
+                                                            break;
+                                                        }
+                                                    }
+                                                    rutas.append(nombreServidor)
+                                                         .append(" -> ")
+                                                         .append(nombrePC)
+                                                         .append("\n");
+                                                }
+                                                String ruta = rutas.toString().trim();
+
                                                 mostrarResumenPaquetes(
                                                     totalEnvios,
-                                                    totalEnvios - paquetesPerdidos,
+                                                    paquetesRecibidos,
                                                     paquetesPerdidos,
                                                     tiempoEnvioStr,
                                                     tiempoRecepcionStr,
-                                                    "5 ms",
+                                                    latenciaStr,
                                                     "512 bytes",
-                                                    "Servidor -> PC"
+                                                    ruta
                                                 );
                                             }
                                         }
@@ -263,13 +289,14 @@ public class PanelBulidThings {
                     }
                 }
 
-                // --- ANIMACIÓN DE PAQUETES DESDE SERVIDOR (con router) ---
+                // --- Animación de paquetes desde servidor (con router) ---
                 Image cajaImg = new ImageIcon("src\\Images\\caja.png").getImage();
 
                 for (JPanel[] par : conexiones) {
-                    JPanel servidor = null, destino = null;
+                    final JPanel[] servidorHolder = {null};
+                    JPanel destino = null;
                     boolean routerIntermedio = false;
-                    JPanel routerPanel = null;
+                    final JPanel[] routerPanel = {null};
 
                     for (int i = 0; i < 2; i++) {
                         String nombre = "";
@@ -283,14 +310,14 @@ public class PanelBulidThings {
                             }
                         }
                         if (nombre.contains("servidor")) {
-                            servidor = par[i];
+                            servidorHolder[0] = par[i];
                             JPanel posibleRouter = par[1 - i];
                             for (Component c : posibleRouter.getComponents()) {
                                 if (c instanceof JLabel) {
                                     JLabel labell = (JLabel) c;
                                     if (labell.getText() != null && labell.getText().toLowerCase().contains("router")) {
                                         routerIntermedio = true;
-                                        routerPanel = posibleRouter;
+                                        routerPanel[0] = posibleRouter;
                                         break;
                                     }
                                 }
@@ -301,12 +328,13 @@ public class PanelBulidThings {
                             break;
                         }
                     }
+                    final JPanel servidor = servidorHolder[0];
 
-                    if (servidor != null && routerIntermedio && routerPanel != null) {
+                    if (servidor != null && routerIntermedio && routerPanel[0] != null) {
                         List<JPanel> pcsConectados = new ArrayList<>();
                         for (JPanel[] par2 : conexiones) {
-                            if (par2[0] == routerPanel || par2[1] == routerPanel) {
-                                JPanel otro = (par2[0] == routerPanel) ? par2[1] : par2[0];
+                            if (par2[0] == routerPanel[0] || par2[1] == routerPanel[0]) {
+                                JPanel otro = (par2[0] == routerPanel[0]) ? par2[1] : par2[0];
                                 for (Component c : otro.getComponents()) {
                                     if (c instanceof JLabel) {
                                         JLabel labell = (JLabel) c;
@@ -353,11 +381,11 @@ public class PanelBulidThings {
                                     }
                                     if (valido) {
                                         Point p1 = servidor.getLocation();
-                                        Point pRouter = routerPanel.getLocation();
+                                        Point pRouter = routerPanel[0].getLocation();
                                         int startX = p1.x + servidor.getWidth() / 2;
                                         int startY = p1.y + servidor.getHeight() / 2;
-                                        int endX = pRouter.x + routerPanel.getWidth() / 2;
-                                        int endY = pRouter.y + routerPanel.getHeight() / 2;
+                                        int endX = pRouter.x + routerPanel[0].getWidth() / 2;
+                                        int endY = pRouter.y + routerPanel[0].getHeight() / 2;
 
                                         final int cantidadFinal = cantidad;
                                         final int totalEnvios = cantidadFinal * seleccionados.length;
@@ -365,15 +393,15 @@ public class PanelBulidThings {
                                         Random rand = new Random();
                                         final int paquetesPerdidos = rand.nextInt(totalEnvios + 1);
 
-                                        // Genera los índices de los paquetes que se perderán
                                         final Set<Integer> perdidosSet = new HashSet<>();
                                         while (perdidosSet.size() < paquetesPerdidos) {
                                             perdidosSet.add(rand.nextInt(totalEnvios));
                                         }
 
-                                        final int[] globalIndex = {0}; // Para llevar el índice global de cada paquete
+                                        final int[] globalIndex = {0};
                                         final long[] tiempoInicio = {0};
                                         final long[] tiempoFin = {0};
+                                        final boolean[] resumenMostrado = {false};
                                         tiempoInicio[0] = System.currentTimeMillis();
 
                                         final int[] enviadosAlRouter = {0};
@@ -408,21 +436,59 @@ public class PanelBulidThings {
                                                             globalIndex[0]++;
                                                         } else {
                                                             ((Timer)ev2.getSource()).stop();
-                                                            if (enviadosTotales[0] == totalEnvios) {
+                                                            if (enviadosTotales[0] == totalEnvios && !resumenMostrado[0]) {
+                                                                resumenMostrado[0] = true;
                                                                 tiempoFin[0] = System.currentTimeMillis();
                                                                 long tiempoEnvio = tiempoFin[0] - tiempoInicio[0];
                                                                 long tiempoRecepcion = tiempoEnvio;
                                                                 String tiempoEnvioStr = tiempoEnvio + " ms";
                                                                 String tiempoRecepcionStr = tiempoRecepcion + " ms";
+                                                                int paquetesRecibidos = totalEnvios - paquetesPerdidos;
+                                                                String latenciaStr = (paquetesRecibidos > 0) ? (tiempoEnvio / paquetesRecibidos) + " ms" : "0 ms";
+
+                                                                // Construir rutas para cada PC seleccionada
+                                                                String nombreServidor = "";
+                                                                for (Component c : servidor.getComponents()) {
+                                                                    if (c instanceof JLabel lbl && lbl.getText() != null && !lbl.getText().isEmpty()) {
+                                                                        nombreServidor = lbl.getText();
+                                                                        break;
+                                                                    }
+                                                                }
+                                                                String nombreRouter = "";
+                                                                for (Component c : routerPanel[0].getComponents()) {
+                                                                    if (c instanceof JLabel lbl && lbl.getText() != null && !lbl.getText().isEmpty()) {
+                                                                        nombreRouter = lbl.getText();
+                                                                        break;
+                                                                    }
+                                                                }
+                                                                StringBuilder rutas = new StringBuilder();
+                                                                for (int idxRuta : seleccionados) {
+                                                                    String nombrePC = "";
+                                                                    JPanel pcDestinoRuta = pcsConectados.get(idxRuta);
+                                                                    for (Component c : pcDestinoRuta.getComponents()) {
+                                                                        if (c instanceof JLabel lbl && lbl.getText() != null && !lbl.getText().isEmpty()) {
+                                                                            nombrePC = lbl.getText();
+                                                                            break;
+                                                                        }
+                                                                    }
+                                                                    rutas.append(nombreServidor)
+                                                                         .append(" -> ")
+                                                                         .append(nombreRouter)
+                                                                         .append(" -> ")
+                                                                         .append(nombrePC)
+                                                                         .append("\n");
+                                                                }
+                                                                String ruta = rutas.toString().trim();
+
                                                                 mostrarResumenPaquetes(
                                                                     totalEnvios,
-                                                                    totalEnvios - paquetesPerdidos,
+                                                                    paquetesRecibidos,
                                                                     paquetesPerdidos,
                                                                     tiempoEnvioStr,
                                                                     tiempoRecepcionStr,
-                                                                    "5 ms",
+                                                                    latenciaStr,
                                                                     "512 bytes",
-                                                                    "Servidor -> Router -> PC"
+                                                                    ruta
                                                                 );
                                                             }
                                                         }
@@ -435,7 +501,8 @@ public class PanelBulidThings {
                                     }
                                 }
                             }
-                        } else if (servidor != null && destino != null && paquetesPorPanel.containsKey(destino)) {
+                        }
+                    } else if (servidor != null && destino != null && paquetesPorPanel.containsKey(destino)) {
                         int cantidad = paquetesPorPanel.get(destino);
                         Point p1 = servidor.getLocation();
                         Point p2 = destino.getLocation();
@@ -461,7 +528,6 @@ public class PanelBulidThings {
                     }
                 }
             }
-        }
         });
 
         panelCentro.add(labelCaja);

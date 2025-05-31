@@ -1,5 +1,12 @@
 import java.awt.*;
 import javax.swing.*;
+import java.io.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 public class MenuFactory {
 
@@ -15,16 +22,204 @@ public class MenuFactory {
         return btn;
     }
 
-    public static JButton createFileButton() {
+    public static JButton createFileButton(List<JPanel[]> conexiones, JPanel centralPanel) {
         JPopupMenu menu = new JPopupMenu();
-        menu.add(new JMenuItem("Nuevo"));
-        menu.add(new JMenuItem("Abrir"));
-        menu.add(new JMenuItem("Guardar"));
+
+        JMenuItem Nuevo = new JMenuItem("Nuevo");
+        menu.add(Nuevo);
+
+        JMenuItem Abrir = new JMenuItem("Abrir");
+        menu.add(Abrir);
+
+        JMenu guardarMenu = new JMenu("Guardar como");
+        JMenuItem guardarPDF = new JMenuItem("PDF");
+        JMenuItem guardarJSON = new JMenuItem("JSON");
+
+        guardarMenu.add(guardarPDF);
+        guardarMenu.add(guardarJSON);
+        menu.add(guardarMenu);
+
+        guardarPDF.addActionListener(e -> {
+        });
+        guardarJSON.addActionListener(e -> {
+            guardarJson(conexiones, centralPanel);
+        });
+
         menu.addSeparator();
-        menu.add(new JMenuItem("Salir"));
+
+        JMenuItem salir = new JMenuItem("Salir");
+        menu.add(salir);
+
+        salir.addActionListener(e -> System.exit(0));
+        Abrir.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            int returnValue = fileChooser.showOpenDialog(null);
+            if (returnValue == JFileChooser.APPROVE_OPTION) {
+                File file = fileChooser.getSelectedFile();
+                if (file.getName().toLowerCase().endsWith(".json")) {
+                    importarJson(file, conexiones, centralPanel);
+                } else {
+                    JOptionPane.showMessageDialog(null, "Seleccione un archivo JSON válido.", "Archivo no válido", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+
         return createButton("File", menu);
     }
 
+    public static void guardarJson(List<JPanel[]> conexiones, JPanel centralPanel) {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Guardar estructura como JSON");
+        int userSelection = fileChooser.showSaveDialog(null);
+
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            String filePath = fileChooser.getSelectedFile().getAbsolutePath();
+            if (!filePath.toLowerCase().endsWith(".json")) {
+                filePath += ".json";
+            }
+
+            JSONArray componentesArray = new JSONArray();
+            for (Component comp : centralPanel.getComponents()) {
+                if (comp instanceof JPanel panel) {
+                    JSONObject obj = new JSONObject();
+                    obj.put("nombre", obtenerNombrePanel(panel));
+                    obj.put("tipo", obtenerTipoPanel(panel));
+                    obj.put("x", panel.getX());
+                    obj.put("y", panel.getY());
+                    obj.put("w", panel.getWidth());
+                    obj.put("h", panel.getHeight());
+                    obj.put("imagen", panel.getClientProperty("imagePath"));
+                    componentesArray.put(obj);
+                }
+            }
+
+            JSONArray conexionesArray = new JSONArray();
+            for (JPanel[] par : conexiones) {
+                JSONObject obj = new JSONObject();
+                obj.put("componente1", obtenerNombrePanel(par[0]));
+                obj.put("componente2", obtenerNombrePanel(par[1]));
+                conexionesArray.put(obj);
+            }
+
+            JSONObject root = new JSONObject();
+            root.put("componentes", componentesArray);
+            root.put("conexiones", conexionesArray);
+
+            try (FileWriter file = new FileWriter(filePath)) {
+                file.write(root.toString(4));
+                JOptionPane.showMessageDialog(null, "Estructura guardada como JSON correctamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(null, "Error al guardar JSON: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    public static void importarJson(File file, List<JPanel[]> conexiones, JPanel centralPanel) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+            JSONObject root = new JSONObject(sb.toString());
+            JSONArray componentesArray = root.getJSONArray("componentes");
+            JSONArray conexionesArray = root.getJSONArray("conexiones");
+
+            centralPanel.removeAll();
+            conexiones.clear();
+
+            Map<String, JPanel> panelesPorNombre = new HashMap<>();
+
+            for (int i = 0; i < componentesArray.length(); i++) {
+                JSONObject obj = componentesArray.getJSONObject(i);
+                String nombre = obj.getString("nombre");
+                String tipo = obj.getString("tipo");
+                int x = obj.getInt("x");
+                int y = obj.getInt("y");
+                int w = obj.getInt("w");
+                int h = obj.getInt("h");
+                String imagePath = obj.optString("imagen", null);
+                JPanel panel = crearPanelDesdeTipo(nombre, tipo, w, h, imagePath);
+                panel.setBounds(x, y, w, h);
+                centralPanel.add(panel);
+                panelesPorNombre.put(nombre, panel);
+            }
+
+            for (int i = 0; i < conexionesArray.length(); i++) {
+                JSONObject obj = conexionesArray.getJSONObject(i);
+                String nombre1 = obj.getString("componente1");
+                String nombre2 = obj.getString("componente2");
+                JPanel panel1 = panelesPorNombre.get(nombre1);
+                JPanel panel2 = panelesPorNombre.get(nombre2);
+                if (panel1 != null && panel2 != null) {
+                    conexiones.add(new JPanel[]{panel1, panel2});
+                }
+            }
+
+            centralPanel.revalidate();
+            centralPanel.repaint();
+            JOptionPane.showMessageDialog(null, "Estructura importada correctamente.", "Éxito", JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(null, "Error al importar JSON: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private static String obtenerNombrePanel(JPanel panel) {
+        for (Component c : panel.getComponents()) {
+            if (c instanceof JLabel lbl && lbl.getText() != null && !lbl.getText().isEmpty()) {
+                return lbl.getText();
+            }
+        }
+        return "Componente";
+    }
+
+    private static String obtenerTipoPanel(JPanel panel) {
+        String imagePath = (String) panel.getClientProperty("imagePath");
+        if (imagePath != null) {
+            if (imagePath.contains("server")) return "servidor";
+            if (imagePath.contains("router")) return "router";
+            if (imagePath.contains("computer")) return "pc";
+        }
+        return "otro";
+    }
+
+    private static JPanel crearPanelDesdeTipo(String nombre, String tipo, int w, int h, String imagePath) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setOpaque(false);
+
+        if (imagePath != null && !imagePath.isEmpty()) {
+            ImageIcon icon = new ImageIcon(imagePath);
+            JLabel imgLabel = new JLabel(new ImageIcon(icon.getImage().getScaledInstance(w, h - 20, Image.SCALE_SMOOTH)));
+            imgLabel.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+            panel.add(imgLabel);
+            panel.putClientProperty("imagePath", imagePath);
+        }
+
+        JLabel label = new JLabel(nombre);
+        label.setAlignmentX(JLabel.CENTER_ALIGNMENT);
+        panel.add(label);
+        panel.setSize(w, h);
+
+        panel.addMouseListener(new java.awt.event.MouseAdapter() {
+            Point offset;
+            public void mousePressed(java.awt.event.MouseEvent evt) {
+                offset = evt.getPoint();
+            }
+        });
+        panel.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            public void mouseDragged(java.awt.event.MouseEvent evt) {
+                Point parentOnScreen = panel.getParent().getLocationOnScreen();
+                Point mouseOnScreen = evt.getLocationOnScreen();
+                int x = mouseOnScreen.x - parentOnScreen.x - panel.getWidth() / 2;
+                int y = mouseOnScreen.y - parentOnScreen.y - panel.getHeight() / 2;
+                panel.setLocation(x, y);
+                panel.getParent().repaint();
+            }
+        });
+
+        return panel;
+    }
 
     public static JButton createHerramientasButton(JFrame frame) {
         JPopupMenu menu = new JPopupMenu();
