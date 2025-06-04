@@ -584,7 +584,7 @@ public class BuildPrincipal {
 
                             JMenu modificarDatos = new JMenu("Modificar Datos");
                             JMenuItem cambiarNombre = new JMenuItem("Cambiar nombre");
-                            JMenuItem cambiarLatencia = new JMenuItem("Cambiar latencia");
+                            //JMenuItem cambiarLatencia = new JMenuItem("Cambiar latencia");
 
                             cambiarNombre.addActionListener(ae -> {
                                 String nuevoNombre = JOptionPane.showInputDialog(null, "Nuevo nombre:", "Cambiar nombre", JOptionPane.QUESTION_MESSAGE);
@@ -612,7 +612,7 @@ public class BuildPrincipal {
                                 }
                             });
 
-                            cambiarLatencia.addActionListener(ae -> {
+                            /*cambiarLatencia.addActionListener(ae -> {
                                 String nuevaLatencia = JOptionPane.showInputDialog(null, "Nueva latencia (ms):", "Cambiar latencia", JOptionPane.QUESTION_MESSAGE);
                                 if (nuevaLatencia != null && !nuevaLatencia.trim().isEmpty()) {
                                     try {
@@ -623,10 +623,10 @@ public class BuildPrincipal {
                                         JOptionPane.showMessageDialog(null, "Valor no válido.", "Error", JOptionPane.ERROR_MESSAGE);
                                     }
                                 }
-                            });
+                            });*/
 
                             modificarDatos.add(cambiarNombre);
-                            modificarDatos.add(cambiarLatencia);
+                            //modificarDatos.add(cambiarLatencia);
 
                             Econexion.addActionListener(ae -> {
                                 List<JPanel[]> conexionesDelPanel = new ArrayList<>();
@@ -786,7 +786,7 @@ public class BuildPrincipal {
 
                             JMenu modificarDatos = new JMenu("Modificar Datos");
                             JMenuItem cambiarNombre = new JMenuItem("Cambiar nombre");
-                            JMenuItem cambiarLatencia = new JMenuItem("Cambiar latencia");
+                            //JMenuItem cambiarLatencia = new JMenuItem("Cambiar latencia");
 
                             cambiarNombre.addActionListener(ae -> {
                                 String nuevoNombre = JOptionPane.showInputDialog(null, "Nuevo nombre:", "Cambiar nombre", JOptionPane.QUESTION_MESSAGE);
@@ -814,7 +814,7 @@ public class BuildPrincipal {
                                 }
                             });
 
-                            cambiarLatencia.addActionListener(ae -> {
+                            /*cambiarLatencia.addActionListener(ae -> {
                                 String nuevaLatencia = JOptionPane.showInputDialog(null, "Nueva latencia (ms):", "Cambiar latencia", JOptionPane.QUESTION_MESSAGE);
                                 if (nuevaLatencia != null && !nuevaLatencia.trim().isEmpty()) {
                                     try {
@@ -825,10 +825,10 @@ public class BuildPrincipal {
                                         JOptionPane.showMessageDialog(null, "Valor no válido.", "Error", JOptionPane.ERROR_MESSAGE);
                                     }
                                 }
-                            });
+                            });*/
 
                             modificarDatos.add(cambiarNombre);
-                            modificarDatos.add(cambiarLatencia);
+                            //modificarDatos.add(cambiarLatencia);
 
                             Econexion.addActionListener(ae -> {
                                 List<JPanel[]> conexionesDelPanel = new ArrayList<>();
@@ -988,7 +988,7 @@ public class BuildPrincipal {
 
                             JMenu modificarDatos = new JMenu("Modificar Datos");
                             JMenuItem cambiarNombre = new JMenuItem("Cambiar nombre");
-                            JMenuItem cambiarLatencia = new JMenuItem("Cambiar latencia");
+                            //JMenuItem cambiarLatencia = new JMenuItem("Cambiar latencia");
 
                             cambiarNombre.addActionListener(ae -> {
                                 String nuevoNombre = JOptionPane.showInputDialog(null, "Nuevo nombre:", "Cambiar nombre", JOptionPane.QUESTION_MESSAGE);
@@ -1016,7 +1016,7 @@ public class BuildPrincipal {
                                 }
                             });
 
-                            cambiarLatencia.addActionListener(ae -> {
+                            /*cambiarLatencia.addActionListener(ae -> {
                                 String nuevaLatencia = JOptionPane.showInputDialog(null, "Nueva latencia (ms):", "Cambiar latencia", JOptionPane.QUESTION_MESSAGE);
                                 if (nuevaLatencia != null && !nuevaLatencia.trim().isEmpty()) {
                                     try {
@@ -1027,10 +1027,10 @@ public class BuildPrincipal {
                                         JOptionPane.showMessageDialog(null, "Valor no válido.", "Error", JOptionPane.ERROR_MESSAGE);
                                     }
                                 }
-                            });
+                            });*/
 
                             modificarDatos.add(cambiarNombre);
-                            modificarDatos.add(cambiarLatencia);
+                            //modificarDatos.add(cambiarLatencia);
 
                             Econexion.addActionListener(ae -> {
                                 List<JPanel[]> conexionesDelPanel = new ArrayList<>();
