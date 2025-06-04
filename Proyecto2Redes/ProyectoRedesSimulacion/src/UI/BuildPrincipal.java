@@ -481,30 +481,30 @@ public class BuildPrincipal {
                                     }
                                 }
                             }
-                        }
-                    } else if (servidor != null && destino != null && paquetesPorPanel.containsKey(destino)) {
-                        int cantidad = paquetesPorPanel.get(destino);
-                        Point p1 = servidor.getLocation();
-                        Point p2 = destino.getLocation();
-                        int startX = p1.x + servidor.getWidth() / 2;
-                        int startY = p1.y + servidor.getHeight() / 2;
-                        int endX = p2.x + destino.getWidth() / 2;
-                        int endY = p2.y + destino.getHeight() / 2;
+                        } else if (servidor != null && destino != null && paquetesPorPanel.containsKey(destino)) {
+                            int cantidad = paquetesPorPanel.get(destino);
+                            Point p1 = servidor.getLocation();
+                            Point p2 = destino.getLocation();
+                            int startX = p1.x + servidor.getWidth() / 2;
+                            int startY = p1.y + servidor.getHeight() / 2;
+                            int endX = p2.x + destino.getWidth() / 2;
+                            int endY = p2.y + destino.getHeight() / 2;
 
-                        final int[] enviados = {0};
-                        Timer timer = new Timer(150, null);
-                        timer.addActionListener(ev -> {
-                            if (enviados[0] < cantidad) {
-                                Animacion paquete = new Animacion(startX, startY, endX, endY, centralPanel, cajaImg);
-                                centralPanel.add(paquete, 0);
-                                centralPanel.setComponentZOrder(paquete, 0);
-                                centralPanel.repaint();
-                                enviados[0]++;
-                            } else {
-                                timer.stop();
-                            }
-                        });
-                        timer.start();
+                            final int[] enviados = {0};
+                            Timer timer = new Timer(150, null);
+                            timer.addActionListener(ev -> {
+                                if (enviados[0] < cantidad) {
+                                    Animacion paquete = new Animacion(startX, startY, endX, endY, centralPanel, cajaImg);
+                                    centralPanel.add(paquete, 0);
+                                    centralPanel.setComponentZOrder(paquete, 0);
+                                    centralPanel.repaint();
+                                    enviados[0]++;
+                                } else {
+                                    timer.stop();
+                                }
+                            });
+                            timer.start();
+                        }
                     }
                 }
             }
@@ -1192,6 +1192,64 @@ public class BuildPrincipal {
                 }
             }
         });
+
+        // ---- BOTÓN CONECTAR TODO AUTOMÁTICO ----
+        JButton autoConnectButton = new JButton("Conectar Todo");
+        autoConnectButton.setToolTipText("Conecta automáticamente todos los servidores, routers y PCs");
+        autoConnectButton.setFocusPainted(false);
+
+        autoConnectButton.addActionListener(e -> {
+            List<JPanel> routers = new ArrayList<>();
+            List<JPanel> servers = new ArrayList<>();
+            List<JPanel> pcs = new ArrayList<>();
+
+            // Clasifica los paneles
+            for (Component comp : centralPanel.getComponents()) {
+                if (comp instanceof JPanel innerPanel) {
+                    String nombre = "";
+                    for (Component c : innerPanel.getComponents()) {
+                        if (c instanceof JLabel lbl && lbl.getText() != null) {
+                            nombre = lbl.getText().toLowerCase();
+                            break;
+                        }
+                    }
+                    if (nombre.contains("router")) routers.add(innerPanel);
+                    else if (nombre.contains("servidor")) servers.add(innerPanel);
+                    else if (nombre.contains("pc")) pcs.add(innerPanel);
+                }
+            }
+            // Limpia conexiones previas
+            conexiones.clear();
+
+            // Conecta cada servidor a todos los routers
+            for (JPanel server : servers) {
+                for (JPanel router : routers) {
+                    conexiones.add(new JPanel[]{server, router});
+                }
+            }
+
+            // Conecta cada PC a todos los routers
+            for (JPanel pc : pcs) {
+                for (JPanel router : routers) {
+                    conexiones.add(new JPanel[]{pc, router});
+                }
+            }
+
+            // Si no hay routers, conecta servidores y PCs directamente
+            if (routers.isEmpty()) {
+                for (JPanel server : servers) {
+                    for (JPanel pc : pcs) {
+                        conexiones.add(new JPanel[]{server, pc});
+                    }
+                }
+            }
+
+            centralPanel.repaint();
+            JOptionPane.showMessageDialog(null, "¡Todos los componentes han sido conectados automáticamente!");
+        });
+
+        // Agrega el botón al panel de controles
+        panel.add(autoConnectButton);
 
         panel.add(routerButton);
         panel.add(clientButton);

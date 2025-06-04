@@ -28,19 +28,28 @@ public class MenuSuperior {
         JMenuItem Nuevo = new JMenuItem("Nuevo");
         menu.add(Nuevo);
 
+        // Acción para limpiar todo el panel y conexiones
+        Nuevo.addActionListener(e -> {
+            centralPanel.removeAll();
+            conexiones.clear();
+            centralPanel.revalidate();
+            centralPanel.repaint();
+        });
+
         JMenuItem Abrir = new JMenuItem("Abrir");
         menu.add(Abrir);
 
         JMenu guardarMenu = new JMenu("Guardar como");
-        JMenuItem guardarPDF = new JMenuItem("PDF");
         JMenuItem guardarJSON = new JMenuItem("JSON");
-
+        
+        /*JMenuItem guardarPDF = new JMenuItem("PDF");
         guardarMenu.add(guardarPDF);
+        guardarPDF.addActionListener(e -> {
+        });*/
+        
         guardarMenu.add(guardarJSON);
         menu.add(guardarMenu);
 
-        guardarPDF.addActionListener(e -> {
-        });
         guardarJSON.addActionListener(e -> {
             guardarJson(conexiones, centralPanel);
         });
